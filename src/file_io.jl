@@ -45,7 +45,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
     end
     data = Float32.(zeros(iNX, iNY, iNZ, 3))
     # Read grid file
-    tStart = report("Reading grid files for $(NPR) processors located in data/out_$(timeStep)",1)
+    tStart = report("Reading grid files for $(NPR) processors located in data/out_$(timeStep)", 1)
     for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
@@ -63,10 +63,10 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
         blocks = read(f, Int32)
         ie, je, ke = read(f, (Int32, 3))
         # Check that ie, je, ke match
-        if (ie != iEnd-iStart+1) || (je != jEnd-jStart+1) || (ke != kEnd-kStart+1)
+        if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
             error("Grid sizes from $(filename) do not match those in data/prempi.dat")
         end
-        data[iStart:iEnd, jStart:jEnd, kStart:kEnd,:] = read(f, (Float32, (ie, je, ke, 3)))
+        data[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, 3)))
         # Close file
         close(f)
     end
@@ -92,7 +92,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
     end
     Q = Float32.(zeros(iNX, iNY, iNZ, nVars))
     # Read solution file
-    tStart = report("Reading solution files for $(NPR) processors located in data/out_$(timeStep)",1)
+    tStart = report("Reading solution files for $(NPR) processors located in data/out_$(timeStep)", 1)
     for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
@@ -110,7 +110,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
         blocks = read(f, Int32)
         ie, je, ke = read(f, (Int32, 3))
         # Check that ie, je, ke match
-        if (ie != iEnd-iStart+1) || (je != jEnd-jStart+1) || (ke != kEnd-kStart+1)
+        if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
             error("Grid sizes from $(filename) do not match those in data/prempi.dat")
         end
         Q[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, nVars)))
