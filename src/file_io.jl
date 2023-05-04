@@ -40,7 +40,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
     iNZ = Int32(extents[3, 2, end] - 2) # Number of points in z-direction
     # Check that the grid sizes match
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
-        error("Grid sizes from prempi.dat file do not match those in grid.par")
+        error("Grid sizes from data/prempi.dat do not match those in grid.par")
     end
     x = Float32.(zeros(iNX, iNY, iNZ))
     y = Float32.(zeros(iNX, iNY, iNZ))
@@ -62,6 +62,10 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
         f = FFile.FortranFile(filename, "r")
         blocks = read(f, Int32)
         ie, je, ke = read(f, (Int32, 3))
+        # Check that ie, je, ke match
+        if (ie != iEnd-iStart+1) || (je != jEnd-jStart+1) || (ke != kEnd-kStart+1)
+            error("Grid sizes from $(filename) do not match those in data/prempi.dat")
+        end
         data = read(f, (Float32, (ie, je, ke, 3)))
         x[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 1]
         y[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 2]
@@ -84,7 +88,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
     iNZ = Int32(extents[3, 2, end] - 2) # Number of points in z-direction
     # Check that the grid sizes match
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
-        error("Grid sizes from prempi.dat file do not match those in grid.par")
+        error("Grid sizes from data/prempi.dat do not match those in grid.par")
     end
     Q = Float32.(zeros(iNX, iNY, iNZ, nVars))
     # Read grid file
@@ -104,6 +108,10 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
         f = FFile.FortranFile(filename, "r")
         blocks = read(f, Int32)
         ie, je, ke = read(f, (Int32, 3))
+        # Check that ie, je, ke match
+        if (ie != iEnd-iStart+1) || (je != jEnd-jStart+1) || (ke != kEnd-kStart+1)
+            error("Grid sizes from $(filename) do not match those in data/prempi.dat")
+        end
         Q[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, nVars)))
         # Close file
         close(f)
