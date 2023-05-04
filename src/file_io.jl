@@ -33,6 +33,7 @@ end
 # Function for reading a Plot3D grid file
 function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
     # Read prempi.dat file
+    report("Reading file data/prempi.dat")
     NPR, extents = readPrempi("data/prempi.dat")
     # Allocate arrays
     iNX = Int32(extents[1, 2, end] - 2) # Number of points in x-direction
@@ -46,6 +47,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
     y = Float32.(zeros(iNX, iNY, iNZ))
     z = Float32.(zeros(iNX, iNY, iNZ))
     # Read grid file
+    tStart = report("Reading grid files for $(NPR) processors located in data/out_$(timeStep)",1)
     for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
@@ -58,7 +60,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
         kStart = Int32(extents[3, 1, n])
         kEnd = Int32(extents[3, 2, n] - 2)
         # Open file
-        println("Reading grid file for processor ", proc)
+        report("Reading grid file for processor $(proc)")
         f = FFile.FortranFile(filename, "r")
         blocks = read(f, Int32)
         ie, je, ke = read(f, (Int32, 3))
@@ -73,6 +75,8 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
         # Close file
         close(f)
     end
+    tEnd = report("Finished reading grid files...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
 
     return x, y, z
 
@@ -81,6 +85,7 @@ end
 # Function for reading a Plot3D solution file
 function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64)
     # Read prempi.dat file
+    report("Reading file data/prempi.dat")
     NPR, extents = readPrempi("data/prempi.dat")
     # Allocate arrays
     iNX = Int32(extents[1, 2, end] - 2) # Number of points in x-direction
@@ -91,7 +96,8 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
         error("Grid sizes from data/prempi.dat do not match those in grid.par")
     end
     Q = Float32.(zeros(iNX, iNY, iNZ, nVars))
-    # Read grid file
+    # Read solution file
+    tStart = report("Reading solution files for $(NPR) processors located in data/out_$(timeStep)",1)
     for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
@@ -104,7 +110,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
         kStart = Int32(extents[3, 1, n])
         kEnd = Int32(extents[3, 2, n] - 2)
         # Open file
-        println("Reading solution file for processor ", proc, " at time ", timeStep)
+        report("Reading solution file for processor $(proc)")
         f = FFile.FortranFile(filename, "r")
         blocks = read(f, Int32)
         ie, je, ke = read(f, (Int32, 3))
@@ -116,6 +122,8 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
         # Close file
         close(f)
     end
+    tEnd = report("Finished reading solution files...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
 
     return Q
 
@@ -143,6 +151,23 @@ function readPrempi(filename::String)
 
     return NPR, extents
 
+end
+
+# Function for printing a message to stdout and a log file
+function report(message, returnTime=0)
+    # Get the current time
+    now = Dates.now()
+    # Prepend the current time to the message
+    message = "$(Dates.format(now, "yyyy-mm-dd HH:MM:SS.sss"))   $(message)"
+    # Print the message to stdout
+    println(message)
+    # Write the message to the log file
+    file = open("processing.log", "a")
+    println(file, message)
+    close(file)
+    if (returnTime == 1)
+        return now
+    end
 end
 
 # Struct to store settings for a rectilinear grid
