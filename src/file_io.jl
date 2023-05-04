@@ -17,14 +17,14 @@ function readSettings(filename::String)
     # Read solution settings
     nVars = parse(Int, split(readline(file), "#")[1])
     startTime = parse(Float64, split(readline(file), "#")[1])
-    ΔT = parse(Float64, split(readline(file), "#")[1])
+    Δt = parse(Float64, split(readline(file), "#")[1])
     nFiles = parse(Int, split(readline(file), "#")[1])
     # Close file
     close(file)
     # Package grid settings into a struct
     grid = rectilinearGrid(Nx, Ny, Nz, xL, xR, yL, yR, zL, zR)
     # Package input file settings into a struct
-    input = inputSettings(nVars, startTime, ΔT, nFiles)
+    input = inputSettings(nVars, startTime, Δt, nFiles)
 
     return grid, input
 
