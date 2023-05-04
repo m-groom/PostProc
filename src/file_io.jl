@@ -43,9 +43,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
         error("Grid sizes from data/prempi.dat do not match those in grid.par")
     end
-    x = Float32.(zeros(iNX, iNY, iNZ))
-    y = Float32.(zeros(iNX, iNY, iNZ))
-    z = Float32.(zeros(iNX, iNY, iNZ))
+    data = Float32.(zeros(iNX, iNY, iNZ, 3))
     # Read grid file
     tStart = report("Reading grid files for $(NPR) processors located in data/out_$(timeStep)",1)
     for n = 1:NPR
@@ -68,17 +66,14 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
         if (ie != iEnd-iStart+1) || (je != jEnd-jStart+1) || (ke != kEnd-kStart+1)
             error("Grid sizes from $(filename) do not match those in data/prempi.dat")
         end
-        data = read(f, (Float32, (ie, je, ke, 3)))
-        x[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 1]
-        y[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 2]
-        z[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 3]
+        data[iStart:iEnd, jStart:jEnd, kStart:kEnd,:] = read(f, (Float32, (ie, je, ke, 3)))
         # Close file
         close(f)
     end
     tEnd = report("Finished reading grid files...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 
-    return x, y, z
+    return data[:, :, :, 1], data[:, :, :, 2], data[:, :, :, 3]
 
 end
 
