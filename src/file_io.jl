@@ -30,6 +30,70 @@ function readSettings(filename::String)
 
 end
 
+# Function for reading a Plot3D grid file
+function readPlot3DGrid(timeStep::String)
+    # Read prempi.dat file
+    NPR, extents = readPrempi("data/prempi.dat")
+    # Allocate arrays
+    iNX = Int32(extents[1, 2, end] - 2)
+    iNY = Int32(extents[2, 2, end] - 2)
+    iNZ = Int32(extents[3, 2, end] - 2)
+    x = Float32.(zeros(iNX, iNY, iNZ))
+    y = Float32.(zeros(iNX, iNY, iNZ))
+    z = Float32.(zeros(iNX, iNY, iNZ))
+    # Read grid file
+    for n = 1:NPR
+        # Generate filename
+        proc = string(n - 1)
+        filename = "data/out_$(timeStep)/$(timeStep).$(proc).g"
+        # Get extents for this processor
+        iStart = Int32(extents[1, 1, n])
+        iEnd = Int32(extents[1, 2, n]) - 2
+        jStart = Int32(extents[2, 1, n])
+        jEnd = Int32(extents[2, 2, n]) - 2
+        kStart = Int32(extents[3, 1, n])
+        kEnd = Int32(extents[3, 2, n]) - 2
+        # Open file
+        println("Reading grid file for processor ", proc)
+        f = FFile.FortranFile(filename, "r")
+        blocks = read(f, Int32)
+        ie, je, ke = read(f, (Int32, 3))
+        data = read(f, (Float32, (ie, je, ke, 3)))
+        x[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 1]
+        y[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 2]
+        z[iStart:iEnd, jStart:jEnd, kStart:kEnd] = data[:, :, :, 3]
+        # Close file
+        close(f)
+    end
+
+    return x, y, z
+
+end
+
+# Function for reading a FLAMENCO prempi.dat file
+function readPrempi(filename::String)
+    # Open file
+    file = open(filename, "r")
+    # Read number of processors
+    NPR = parse(Int, readline(file))
+    extents = Int.(zeros(3, 2, NPR))
+    for n = 1:NPR
+        # Read processor number
+        proc = parse(Int, readline(file))
+        # Read k extents
+        extents[3, :, proc+1] = parse.(Int, split(readline(file)))
+        # Read j extents
+        extents[2, :, proc+1] = parse.(Int, split(readline(file)))
+        # Read i extents
+        extents[1, :, proc+1] = parse.(Int, split(readline(file)))
+    end
+    # Close file
+    close(file)
+
+    return NPR, extents
+
+end
+
 # Struct to store settings for a rectilinear grid
 struct rectilinearGrid
     Nx::Int64
