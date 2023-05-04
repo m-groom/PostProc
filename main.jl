@@ -7,6 +7,7 @@ import Dates
 import WriteVTK
 # Load functions
 include("src/file_io.jl")
+include("src/structs.jl")
 
 # Read parameter file
 grid, input = readSettings("post.par")

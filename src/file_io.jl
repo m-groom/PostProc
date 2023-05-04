@@ -1,4 +1,21 @@
-# Functions to read and write VTK files
+# Functions to for file input and output
+
+# Function for printing a message to stdout and a log file
+function report(message, returnTime=0)
+    # Get the current time
+    now = Dates.now()
+    # Prepend the current time to the message
+    message = "$(Dates.format(now, "yyyy-mm-dd HH:MM:SS.sss"))   $(message)"
+    # Print the message to stdout
+    println(message)
+    # Write the message to the log file
+    file = open("processing.log", "a")
+    println(file, message)
+    close(file)
+    if (returnTime == 1)
+        return now
+    end
+end
 
 # function to read settings for the post.par file
 function readSettings(filename::String)
@@ -180,42 +197,4 @@ function readPrempi(filename::String)
 
     return NPR, extents
 
-end
-
-# Function for printing a message to stdout and a log file
-function report(message, returnTime=0)
-    # Get the current time
-    now = Dates.now()
-    # Prepend the current time to the message
-    message = "$(Dates.format(now, "yyyy-mm-dd HH:MM:SS.sss"))   $(message)"
-    # Print the message to stdout
-    println(message)
-    # Write the message to the log file
-    file = open("processing.log", "a")
-    println(file, message)
-    close(file)
-    if (returnTime == 1)
-        return now
-    end
-end
-
-# Struct to store settings for a rectilinear grid
-struct rectilinearGrid
-    Nx::Int64
-    Ny::Int64
-    Nz::Int64
-    xL::Float64
-    xR::Float64
-    yL::Float64
-    yR::Float64
-    zL::Float64
-    zR::Float64
-end
-
-# Struct to store input file settings
-struct inputSettings
-    nVars::Int
-    startTime::Float64
-    ΔT::Float64
-    nFiles::Int
 end
