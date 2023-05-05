@@ -5,6 +5,8 @@ function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, N
     # Initialise sums
     DBar = zeros(Float64, Nx)
     UBar = zeros(Float64, Nx)
+    VBar = zeros(Float64, Nx)
+    WBar = zeros(Float64, Nx)
     Y1Bar = zeros(Float64, Nx)
     Z1Bar = zeros(Float64, Nx)
     Z1Z2Bar = zeros(Float64, Nx)
@@ -33,7 +35,7 @@ function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, N
     Z1Bar = Z1Bar * nPtsInv
     Z1Z2Bar = Z1Z2Bar * nPtsInv
     # Package into a struct
-    QBar = planeAverage(x[:, 1, 1], DBar, UBar, Y1Bar, Z1Bar, Z1Z2Bar)
+    QBar = planeAverage(x[:, 1, 1], DBar, UBar, VBar, WBar, Y1Bar, Z1Bar, Z1Z2Bar)
     return QBar
 end
 

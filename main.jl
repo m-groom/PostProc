@@ -10,6 +10,7 @@ using Printf
 include("src/file_io.jl")
 include("src/structs.jl")
 include("src/plane_averages.jl")
+include("src/integral_quantities.jl")
 
 # Read parameter file
 grid, input, x0 = readSettings("post.par")
@@ -34,3 +35,6 @@ QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars)
 
 # Write plane averages
 writePlaneAverages(t, QBar)
+
+# Calculate integral quantities
+calcIntegralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0)
