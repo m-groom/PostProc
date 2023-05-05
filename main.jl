@@ -26,4 +26,4 @@ Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars)
 writeSolution(t, x, y, z, Q, input.nVars)
 
 # Write out slice
-writeSlice(t, x, y, z, Q, input.nVars, "xz", x0)
+writeSlice(t, x, y, z, Q, input.nVars, "xy", x0)

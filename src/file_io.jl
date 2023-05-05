@@ -56,24 +56,24 @@ function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::
         filename = "data/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
         tStart = report("Writing the solution at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
         WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
-            vtk["MomentumX"] = Q[:, :, :, 1]
-            vtk["MomentumY"] = Q[:, :, :, 2]
-            vtk["MomentumZ"] = Q[:, :, :, 3]
-            vtk["EnergyDensity"] = Q[:, :, :, 4]
+            vtk["MomentumX", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 1]
+            vtk["MomentumY", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 2]
+            vtk["MomentumZ", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 3]
+            vtk["EnergyDensity", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 4]
             if (iNVars >= 10)
                 for v = 1:2
-                    vtk["DensityMassFraction$(v)"] = Q[:, :, :, 4+v]
+                    vtk["DensityMassFraction$(v)", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 4+v]
                 end
             end
             if (iNVars == 12)
                 for v = 1:2
-                    vtk["VolumeFraction$(v)"] = Q[:, :, :, 4+2+v]
+                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 4+2+v]
                 end
             end
-            vtk["Density"] = Q[:, :, :, iNVars-3]
-            vtk["Gamma"] = Q[:, :, :, iNVars-2]
-            vtk["Pressure"] = Q[:, :, :, iNVars-1]
-            vtk["Temperature"] = Q[:, :, :, iNVars]
+            vtk["Density", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars-3]
+            vtk["Gamma", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars-2]
+            vtk["Pressure", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars-1]
+            vtk["Temperature", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars]
         end
     else
         error("Number of variables must be 8, 10 or 12")
