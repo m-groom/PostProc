@@ -7,6 +7,7 @@
 6.283185307179586   # yR: right extent of the domain in the x direction (Float64)
 0.0                 # zL: left extent of the domain in the x direction (Float64)
 6.283185307179586   # zR: right extent of the domain in the x direction (Float64)
+3.5                 # x0: Initial location of interface (Float64)
 10                  # nVars: number of variables in the solution vector (Int)
 0.0                 # startTime: output time of first input file (Float64)
 0.005               # ΔT: output interval of input files (Float64)

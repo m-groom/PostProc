@@ -10,7 +10,7 @@ include("src/file_io.jl")
 include("src/structs.jl")
 
 # Read parameter file
-grid, input = readSettings("post.par")
+grid, input, x0 = readSettings("post.par")
 # Get first time step
 t = input.startTime
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
@@ -25,4 +25,5 @@ Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars)
 # Write out full solution
 writeSolution(t, x, y, z, Q, input.nVars)
 
-# TODO: write out a slice at any x-y, x-z, or y-z plane
+# Write out slice
+# writeSlice(t, x, y, z, Q, input.nVars, "xz", x0)

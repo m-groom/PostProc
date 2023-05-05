@@ -31,6 +31,7 @@ function readSettings(filename::String)
     yR = parse(Float64, split(readline(file), "#")[1])
     zL = parse(Float64, split(readline(file), "#")[1])
     zR = parse(Float64, split(readline(file), "#")[1])
+    x0 = parse(Float64, split(readline(file), "#")[1])
     # Read solution settings
     nVars = parse(Int, split(readline(file), "#")[1])
     startTime = parse(Float64, split(readline(file), "#")[1])
@@ -43,7 +44,7 @@ function readSettings(filename::String)
     # Package input file settings into a struct
     input = inputSettings(nVars, startTime, Δt, nFiles)
 
-    return grid, input
+    return grid, input, x0
 
 end
 
@@ -92,7 +93,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
     iNZ = Int32(extents[3, 2, end] - 2) # Number of points in z-direction
     # Check that the grid sizes match
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
-        error("Grid sizes from data/prempi.dat do not match those in grid.par")
+        error("Grid sizes from data/prempi.dat do not match those in post.par")
     end
     data = Float32.(zeros(iNX, iNY, iNZ, 3))
     # Read grid file
@@ -139,7 +140,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
     iNZ = Int32(extents[3, 2, end] - 2) # Number of points in z-direction
     # Check that the grid sizes match
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
-        error("Grid sizes from data/prempi.dat do not match those in grid.par")
+        error("Grid sizes from data/prempi.dat do not match those in post.par")
     end
     Q = Float32.(zeros(iNX, iNY, iNZ, nVars))
     # Read solution file
