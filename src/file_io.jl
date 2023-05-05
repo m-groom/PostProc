@@ -52,7 +52,7 @@ end
 function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64)
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
-        # Write solution to a vtr file
+        # Write solution to a .vtr file
         filename = "data/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
         tStart = report("Writing the solution at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
         WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
@@ -79,6 +79,63 @@ function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::
         error("Number of variables must be 8, 10 or 12")
     end
     tEnd = report("Finished writing solution...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
+end
+
+# Function for writing out a slice to a .vtr file
+function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, slice::String, x0::Float64)
+    # Calculate y0 and z0
+    y0 = (y[1, end, 1] + y[1, 1, 1]) * 0.5
+    z0 = (z[1, 1, end] + z[1, 1, 1]) * 0.5
+    # Find index of x0, y0 and z0
+    iX0 = argmin(abs.(x[:, 1, 1] .- x0))
+    iY0 = argmin(abs.(y[1, :, 1] .- y0))
+    iZ0 = argmin(abs.(z[1, 1, :] .- z0))
+    # Get slice from the solution Q
+    if (slice == "xz" || slice == "zx")
+        Qs = Q[:, iY0, :, :]
+        x1 = x[:, iY0, 1]
+        x2 = z[1, iY0, :]
+    elseif (slice == "xy" || slice == "yx")
+        Qs = Q[:, :, iZ0, :]
+        x1 = x[:, 1, iZ0]
+        x2 = y[1, :, iZ0]
+    elseif (slice == "yz" || slice == "zy")
+        Qs = Q[iX0, :, :, :]
+        x1 = y[iX0, :, 1]
+        x2 = z[iX0, 1, :]
+    else
+        error("Slice must be 'xy', 'xz' or 'yz'")
+    end
+    # Check that there are 8, 10 or 12 variables
+    if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
+        # Write slice to a .vtr file
+        filename = "data/slice_$(slice)_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
+        tStart = report("Writing $(slice) slice at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
+        WriteVTK.vtk_grid(filename, x1, x2) do vtk
+            vtk["MomentumX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
+            vtk["MomentumY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
+            vtk["MomentumZ", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 3]
+            vtk["EnergyDensity", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4]
+            if (iNVars >= 10)
+                for v = 1:2
+                    vtk["DensityMassFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4+v]
+                end
+            end
+            if (iNVars == 12)
+                for v = 1:2
+                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4+2+v]
+                end
+            end
+            vtk["Density", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-3]
+            vtk["Gamma", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-2]
+            vtk["Pressure", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-1]
+            vtk["Temperature", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars]
+        end
+    else
+        error("Number of variables must be 8, 10 or 12")
+    end
+    tEnd = report("Finished writing $(slice) slice...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
 
