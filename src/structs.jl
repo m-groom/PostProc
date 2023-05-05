@@ -20,3 +20,13 @@ struct inputSettings
     ΔT::Float64
     nFiles::Int
 end
+
+# Struct to store plane averages
+struct planeAverages
+    x::Array{Float64,1}
+    DBar::Array{Float64,1}
+    UBar::Array{Float64,1}
+    Y1Bar::Array{Float64,1}
+    Z1Bar::Array{Float64,1}
+    Z1Z2Bar::Array{Float64,1}
+end
