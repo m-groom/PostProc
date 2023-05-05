@@ -19,6 +19,7 @@ end
 
 # function to read settings for the post.par file
 function readSettings(filename::String)
+    report("Reading settings from file $filename")
     # Open file
     file = open(filename, "r")
     # Read grid settings
@@ -50,11 +51,11 @@ end
 
 # Function for writing the solution to a .vtr file
 function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64)
+    tStart = report("Writing the solution at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write solution to a .vtr file
         filename = "data/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
-        tStart = report("Writing the solution at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
         WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
             vtk["MomentumX", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 1]
             vtk["MomentumY", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 2]
@@ -107,11 +108,11 @@ function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Arr
     else
         error("Slice must be 'xy', 'xz' or 'yz'")
     end
+    tStart = report("Writing $(slice) slice at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write slice to a .vtr file
-        filename = "data/slice_$(slice)_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
-        tStart = report("Writing $(slice) slice at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
+        filename = "data/slice_$(slice)_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"     
         WriteVTK.vtk_grid(filename, x1, x2) do vtk
             vtk["MomentumX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
             vtk["MomentumY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
@@ -189,7 +190,7 @@ end
 # Function for reading a Plot3D solution file
 function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64)
     # Read prempi.dat file
-    report("Reading file data/prempi.dat")
+    report("Reading grid partition data from file data/prempi.dat")
     NPR, extents = readPrempi("data/prempi.dat")
     # Allocate arrays
     iNX = Int32(extents[1, 2, end] - 2) # Number of points in x-direction

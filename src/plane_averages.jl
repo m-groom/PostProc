@@ -43,6 +43,7 @@ end
 function writePlaneAverages(t::Float64, QBar::planeAverage)
     # Make file name
     filename = "data/planeAverages_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    tStart = report("Writing plane averages to file $filename", 1)
     # Open file
     f = open(filename, "w")
     # Write header
@@ -53,20 +54,22 @@ function writePlaneAverages(t::Float64, QBar::planeAverage)
     end
     # Close file
     close(f)
+    tEnd = report("Finished writing plane averages", 1)
+    report("Elapsed time: $(tEnd - tStart)")
 end
 
-# Function to write out Reynolds stresses to a space delimited text file
-function writeReynoldsStress(t::Float64, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, x::Array{Float32,1})
-    # Make file name
-    filename = "data/Rii_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    # Open file
-    f = open(filename, "w")
-    # Write header
-    write(f, "# x   R11   R22   R33\n")
-    # Write data in scientific format with 15 digits
-    for i = 1:length(x)-1
-        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", R11[i]))   $(@sprintf("%.15e", R22[i]))   $(@sprintf("%.15e", R33[i]))\n")
-    end
-    # Close file
-    close(f)
-end
+# # Function to write out Reynolds stresses to a space delimited text file
+# function writeReynoldsStress(t::Float64, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, x::Array{Float32,1})
+#     # Make file name
+#     filename = "data/Rii_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+#     # Open file
+#     f = open(filename, "w")
+#     # Write header
+#     write(f, "# x   R11   R22   R33\n")
+#     # Write data in scientific format with 15 digits
+#     for i = 1:length(x)-1
+#         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", R11[i]))   $(@sprintf("%.15e", R22[i]))   $(@sprintf("%.15e", R33[i]))\n")
+#     end
+#     # Close file
+#     close(f)
+# end
