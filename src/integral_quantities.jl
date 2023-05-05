@@ -4,6 +4,8 @@
 function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
     # Calculate velocity correlation tensor
     R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, nVars)
+    # Write R11(0), R22(0) and R33(0) to file
+    writeReynoldsStress(t, R11, R22, R33, x[:, 1, 1])
 
 end
 
