@@ -22,7 +22,7 @@ struct inputSettings
 end
 
 # Struct to store plane averages
-struct planeAverages
+struct planeAverage
     x::Array{Float64,1}
     DBar::Array{Float64,1}
     UBar::Array{Float64,1}

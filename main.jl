@@ -5,6 +5,7 @@ import PyPlot as plt
 import FortranFiles as FFile
 import Dates
 import WriteVTK
+using Printf
 # Load functions
 include("src/file_io.jl")
 include("src/structs.jl")
@@ -31,5 +32,5 @@ writeSlice(t, x, y, z, Q, input.nVars, "xy", x0)
 # Calculate plane averages
 QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars)
 
-# # Write plane averages
-# writePlaneAverages(t, QBar)
+# Write plane averages
+writePlaneAverages(t, QBar)

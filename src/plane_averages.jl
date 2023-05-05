@@ -13,8 +13,8 @@ function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, N
     for k = 1:Nz
         for j = 1:Ny
             for i = 1:Nx
-                DInv = 1.0 / Q[i, j, k, nVars - 3]
-                DBar[i] = DBar[i] + Q[i, j, k, nVars - 3]
+                DInv = 1.0 / Q[i, j, k, nVars-3]
+                DBar[i] = DBar[i] + Q[i, j, k, nVars-3]
                 UBar[i] = UBar[i] + Q[i, j, k, 1] * DInv
                 if (nVars >= 10)
                     Y1Bar[i] = Y1Bar[i] + Q[i, j, k, 5] * DInv
@@ -33,10 +33,22 @@ function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, N
     Z1Bar = Z1Bar * nPtsInv
     Z1Z2Bar = Z1Z2Bar * nPtsInv
     # Package into a struct
-    QBar = planeAverages(x[:, 1, 1], DBar, UBar, Y1Bar, Z1Bar, Z1Z2Bar)
-
+    QBar = planeAverage(x[:, 1, 1], DBar, UBar, Y1Bar, Z1Bar, Z1Z2Bar)
     return QBar
-
 end
 
-# Function to write out plane averages to a file
+# Function to write out plane averages to a tab delimited text file
+function writePlaneAverages(t::Float64, QBar::planeAverage)
+    # Make file name
+    filename = "data/planeAverages_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   DBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
+    # Write data in scientific format with 15 digits
+    for i = 1:length(QBar.x)-1
+        write(f, "$(@sprintf("%.15e", QBar.x[i]))   $(@sprintf("%.15e", QBar.DBar[i]))   $(@sprintf("%.15e", QBar.UBar[i]))   $(@sprintf("%.15e", QBar.Y1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Z2Bar[i]))\n")
+    end
+    # Close file
+    close(f)
+end

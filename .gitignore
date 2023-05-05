@@ -1,5 +1,5 @@
 data/out_*
-data/prempi.dat
+data/*.dat
 src/*.so
 *.vts
 *.vtr
