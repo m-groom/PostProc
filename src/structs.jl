@@ -24,7 +24,7 @@ end
 # Struct to store plane averages
 struct planeAverage
     x::Array{Float64,1}
-    DBar::Array{Float64,1}
+    rhoBar::Array{Float64,1}
     UBar::Array{Float64,1}
     VBar::Array{Float64,1}
     WBar::Array{Float64,1}
@@ -32,4 +32,5 @@ struct planeAverage
     Z1Bar::Array{Float64,1}
     Z1Z2Bar::Array{Float64,1}
     muBar::Array{Float64,1}
+    nuBar::Array{Float64,1}
 end

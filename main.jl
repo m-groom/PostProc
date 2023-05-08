@@ -22,7 +22,7 @@ timeStep = rpad(string(round(t, digits=8)), 10, "0")
 x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz)
 
 # TODO: wrap this in a loop to read all time steps
-t = 0.0
+t = 0.5
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load solution
 Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars)

@@ -197,15 +197,17 @@ function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Flo
     dudxSquared = zeros(Float64, grid.Nx) # <(du/dx)^2>
     dvdySquared = zeros(Float64, grid.Nx) # <(dv/dy)^2>
     dwdzSquared = zeros(Float64, grid.Nx) # <(dw/dz)^2>
+    omegaSquared = zeros(Float64, grid.Nx, 3) # <(omega_i)^2>
+    divUSquared = zeros(Float64, grid.Nx) # <(du/dx+dv/dy+dw/dz)^2>
     nPtsInv = 1.0 / (grid.Ny * grid.Nz)
     # Loop over all cells
     for k = 1:grid.Nz
         for j = 1:grid.Ny
             for i = 1:grid.Nx
-                DInv = 1.0 / Q[i, j, k, nVars-3]
-                u = Q[i, j, k, 1] * DInv - QBar.UBar[i]
-                v = Q[i, j, k, 2] * DInv - QBar.VBar[i]
-                w = Q[i, j, k, 3] * DInv - QBar.WBar[i]
+                rhoInv = 1.0 / Q[i, j, k, nVars-3]
+                u = Q[i, j, k, 1] * rhoInv - QBar.UBar[i]
+                v = Q[i, j, k, 2] * rhoInv - QBar.VBar[i]
+                w = Q[i, j, k, 3] * rhoInv - QBar.WBar[i]
                 # Calculate Reynolds stresses
                 R11[i] = R11[i] + u * u
                 R22[i] = R22[i] + v * v
@@ -224,6 +226,18 @@ function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Flo
                 dudxSquared[i] = dudxSquared[i] + Uii * Uii
                 dvdySquared[i] = dvdySquared[i] + Ujj * Ujj
                 dwdzSquared[i] = dwdzSquared[i] + Ukk * Ukk
+                # Compute fluctuating vorticity
+                ωx = Ujk - Ukj
+                ωy = Uki - Uik
+                ωz = Uij - Uji
+                # Compute square of fluctuating vorticity
+                omegaSquared[i, 1] = omegaSquared[i, 1] + ωx * ωx
+                omegaSquared[i, 2] = omegaSquared[i, 2] + ωy * ωy
+                omegaSquared[i, 3] = omegaSquared[i, 3] + ωz * ωz
+                # Compute fluctuating divergence
+                divU = Uii + Ujj + Ukk
+                # Compute square of fluctuating divergence
+                divUSquared = divU * divU
             end
         end
     end
@@ -234,14 +248,20 @@ function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Flo
     dudxSquared = dudxSquared * nPtsInv
     dvdySquared = dvdySquared * nPtsInv
     dwdzSquared = dwdzSquared * nPtsInv
-
+    omegaSquared = omegaSquared * nPtsInv
+    divUSquared = divUSquared * nPtsInv
+    # Calculate dissipation rate
+    εx = QBar.muBar ./ QBar.rhoBar .* (omegaSquared[:, 1] .+ 4.0 / 9.0 * divUSquared)
+    εy = QBar.muBar ./ QBar.rhoBar .* (omegaSquared[:, 2] .+ 4.0 / 9.0 * divUSquared)
+    εz = QBar.muBar ./ QBar.rhoBar .* (omegaSquared[:, 3] .+ 4.0 / 9.0 * divUSquared)
+    # Calculate Taylor and Kolmogorov microscales
     λx = sqrt.(R11 ./ dudxSquared)
     λy = sqrt.(R22 ./ dvdySquared)
     λz = sqrt.(R33 ./ dwdzSquared)
     λyz = 0.5 * (λy + λz)
-    ηx = zeros(Float64, grid.Nx) 
-    ηy = zeros(Float64, grid.Nx) 
-    ηz = zeros(Float64, grid.Nx) 
+    ηx = (QBar.nuBar .^ 3 ./ εx) .^ 0.25
+    ηy = (QBar.nuBar .^ 3 ./ εy) .^ 0.25
+    ηz = (QBar.nuBar .^ 3 ./ εz) .^ 0.25
     ηyz = 0.5 * (ηy + ηz)
 
     return λx, λyz, ηx, ηyz

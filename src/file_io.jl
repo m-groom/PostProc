@@ -273,10 +273,10 @@ function writePlaneAverages(t::Float64, QBar::planeAverage)
     # Open file
     f = open(filename, "w")
     # Write header
-    write(f, "# x   DBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
+    write(f, "# x   rhoBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
     # Write data in scientific format with 15 digits
     for i = 1:length(QBar.x)-1
-        write(f, "$(@sprintf("%.15e", QBar.x[i]))   $(@sprintf("%.15e", QBar.DBar[i]))   $(@sprintf("%.15e", QBar.UBar[i]))   $(@sprintf("%.15e", QBar.Y1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Z2Bar[i]))\n")
+        write(f, "$(@sprintf("%.15e", QBar.x[i]))   $(@sprintf("%.15e", QBar.rhoBar[i]))   $(@sprintf("%.15e", QBar.UBar[i]))   $(@sprintf("%.15e", QBar.Y1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Z2Bar[i]))\n")
     end
     # Close file
     close(f)
