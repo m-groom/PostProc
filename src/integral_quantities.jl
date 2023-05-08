@@ -157,12 +157,27 @@ function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R3
     j0 = Int(ceil(length(ry) / 2))
     k0 = Int(ceil(length(rz) / 2))
     # Get location of first zero crossing
-    i2 = i0 - 1 + findfirst(x -> x < 0.0, R11[i0:end]) - 1
-    i1 = findlast(x -> x < 0.0, R11[1:i0]) + 1
-    j2 = j0 - 1 + findfirst(x -> x < 0.0, R22[j0:end]) - 1
-    j1 = findlast(x -> x < 0.0, R22[1:j0]) + 1
-    k2 = k0 - 1 + findfirst(x -> x < 0.0, R33[k0:end]) - 1
-    k1 = findlast(x -> x < 0.0, R33[1:k0]) + 1
+    if (all(x -> x >= 0.0, R11)) # Check if R11 is positive everywhere
+        i1 = 1
+        i2 = length(R11)
+    else
+        i2 = i0 - 1 + findfirst(x -> x < 0.0, R11[i0:end]) - 1
+        i1 = findlast(x -> x < 0.0, R11[1:i0]) + 1
+    end
+    if (all(x -> x >= 0.0, R22)) # Check if R22 is positive everywhere
+        j1 = 1
+        j2 = length(R22)
+    else
+        j2 = j0 - 1 + findfirst(x -> x < 0.0, R22[j0:end]) - 1
+        j1 = findlast(x -> x < 0.0, R22[1:j0]) + 1
+    end
+    if (all(x -> x >= 0.0, R33)) # Check if R33 is positive everywhere
+        k1 = 1
+        k2 = length(R33)
+    else
+        k2 = k0 - 1 + findfirst(x -> x < 0.0, R33[k0:end]) - 1
+        k1 = findlast(x -> x < 0.0, R33[1:k0]) + 1
+    end
     # Calculate correlation lengths
     Λx = trapz(rx[i1:i2], R11[i1:i2])
     Λy = trapz(ry[j1:j2], R22[j1:j2])
