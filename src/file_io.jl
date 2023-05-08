@@ -304,7 +304,7 @@ end
 # Function to write out Reynolds stresses to a space delimited text file
 function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1})
     # Make file name
-    filename = "data/Rii_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    filename = "data/reynoldsStresses_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Reynolds stresses to file $filename")
     # Open file
     f = open(filename, "w")
@@ -333,6 +333,23 @@ function writeLengthScales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1
     end
     # Write data in scientific format with 15 digits
     write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", λx[i0]))   $(@sprintf("%.15e", λyz[i0]))   $(@sprintf("%.15e", ηx[i0]))   $(@sprintf("%.15e", ηyz[i0]))\n")
+    # Close file
+    close(f)
+end
+
+# Function to write out dissipation rates to a space delimited text file
+function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1})
+    # Make file name
+    filename = "data/dissipationRates_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing dissipation rates to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   epsX   epsY   epsY\n")
+    # Write data in scientific format with 15 digits
+    for i = 1:length(x)-1
+        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", εx[i]))   $(@sprintf("%.15e", εy[i]))   $(@sprintf("%.15e", εz[i]))\n")
+    end
     # Close file
     close(f)
 end
