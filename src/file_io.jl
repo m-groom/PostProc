@@ -112,7 +112,7 @@ function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Arr
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write slice to a .vtr file
-        filename = "data/slice_$(slice)_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"     
+        filename = "data/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"     
         WriteVTK.vtk_grid(filename, x1, x2) do vtk
             vtk["MomentumX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
             vtk["MomentumY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]

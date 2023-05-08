@@ -11,6 +11,7 @@ include("src/file_io.jl")
 include("src/structs.jl")
 include("src/plane_averages.jl")
 include("src/integral_quantities.jl")
+include("src/tools_integral.jl")
 
 # Read parameter file
 grid, input, x0 = readSettings("post.par")

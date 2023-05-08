@@ -9,6 +9,8 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate correlation lengths
     Λx, Λyz = calcCorrelationLengths(R11, R22, R33, x[:, 1, 1], y[1, :, 1], z[1, 1, :], grid)
+    # Write correlation lengths to file
+    writeCorrelationLengths(t, Λx, Λyz)
 
     # Calculate directional length scales
     # λx, λyz, ηx, ηyz = calcLengthScales(x, y, z, Q, QBar, grid, nVars)
@@ -154,11 +156,13 @@ function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R3
     j1 = findlast(x -> x < 0.0, R22[1:j0]) + 1
     k2 = k0 - 1 + findfirst(x -> x < 0.0, R33[k0:end]) - 1
     k1 = findlast(x -> x < 0.0, R33[1:k0]) + 1
-
-
-    Λx = 0.0
-    Λyz = 0.0
+    # Calculate correlation lengths
+    Λx = trapz(rx[i1:i2], R11[i1:i2])
+    Λy = trapz(ry[j1:j2], R22[j1:j2])
+    Λz = trapz(rz[k1:k2], R33[k1:k2])
+    Λyz = 0.5 * (Λy + Λz)
 
     return Λx, Λyz
 
 end
+
