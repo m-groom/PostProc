@@ -16,12 +16,12 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     writeCorrelationLengths(t, Λx, Λyz)
     # Calculate directional length scales
     tStart = report("Calculating directional length scales", 1)
-    λx, λyz, ηx, ηyz = calcLengthScales(x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, t)
+    λx, λyz, ηx, ηyz = calcLengthScales(t, x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
     tEnd = report("Finished calculating directional length scales...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Write directional length scales to file
-    writeLengthScales(t, x[:, 1, 1], λx, λyz, ηx, ηyz, x0)
-
+    writeLengthScales(t, λx, λyz, ηx, ηyz)
+    # TODO: calculate integral width
 end
 
 # Function to calculate velocity correlation tensor at x = x0
@@ -189,7 +189,7 @@ function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R3
 end
 
 # Function to calculate Taylor and Kolmorogov microscales
-function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, t::Float64)
+function calcLengthScales(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
     # Initialise arrays
     R11 = zeros(Float64, grid.Nx) # <u'u'>
     R22 = zeros(Float64, grid.Nx) # <v'v'>
@@ -267,7 +267,13 @@ function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Flo
     writeReynoldsStresses(t, x, R11, R22, R33)
     # Write dissipation rates to file
     writeDissipationRates(t, x, εx, εy, εz)
+    # Write Taylor microscales to file
+    writeTaylorMicroscales(t, x, λx, λy, λz)
+    # Write Kolmogorov microscales to file
+    writeKolmogorovMicroscales(t, x, ηx, ηy, ηz)
+    # Get location of interface
+    i0 = argmin(abs.(x .- x0))
 
-    return λx, λyz, ηx, ηyz
+    return λx[i0], λyz[i0], ηx[i0], ηyz[i0]
 
 end

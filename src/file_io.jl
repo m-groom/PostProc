@@ -301,6 +301,23 @@ function writeCorrelationLengths(t::Float64, Λx::Float64, Λyz::Float64)
     close(f)
 end
 
+# Function to write length scales to a space delimited text file
+function writeLengthScales(t::Float64, λx::Float64, λyz::Float64, ηx::Float64, ηyz::Float64)
+    # Get filename
+    filename = "data/lengthScales.dat"
+    report("Writing length scales to file $filename")
+    # Append to file
+    f = open(filename, "a")
+    # Write header if file is empty
+    if (filesize(filename) == 0)
+        write(f, "# t   lambdax   lambdayz   etax   etayz\n")
+    end
+    # Write data in scientific format with 15 digits
+    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", λx))   $(@sprintf("%.15e", λyz))   $(@sprintf("%.15e", ηx))   $(@sprintf("%.15e", ηyz))\n")
+    # Close file
+    close(f)
+end
+
 # Function to write out Reynolds stresses to a space delimited text file
 function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1})
     # Make file name
@@ -318,25 +335,6 @@ function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float
     close(f)
 end
 
-# Function to write length scales to a space delimited text file
-function writeLengthScales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1}, λyz::Array{Float64,1}, ηx::Array{Float64,1}, ηyz::Array{Float64,1}, x0::Float64)
-    # Get filename
-    filename = "data/lengthScales.dat"
-    # Get location of interface
-    i0 = argmin(abs.(x .- x0))
-    report("Writing length scales to file $filename")
-    # Append to file
-    f = open(filename, "a")
-    # Write header if file is empty
-    if (filesize(filename) == 0)
-        write(f, "# t   lambdax   lambdayz   etax   etayz\n")
-    end
-    # Write data in scientific format with 15 digits
-    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", λx[i0]))   $(@sprintf("%.15e", λyz[i0]))   $(@sprintf("%.15e", ηx[i0]))   $(@sprintf("%.15e", ηyz[i0]))\n")
-    # Close file
-    close(f)
-end
-
 # Function to write out dissipation rates to a space delimited text file
 function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1})
     # Make file name
@@ -345,10 +343,44 @@ function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float
     # Open file
     f = open(filename, "w")
     # Write header
-    write(f, "# x   epsX   epsY   epsY\n")
+    write(f, "# x   epsilonx   epsilony   epsilonz\n")
     # Write data in scientific format with 15 digits
     for i = 1:length(x)-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", εx[i]))   $(@sprintf("%.15e", εy[i]))   $(@sprintf("%.15e", εz[i]))\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write out Taylor microscales to a space delimited text file
+function writeTaylorMicroscales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1})
+    # Make file name
+    filename = "data/taylor_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing Taylor microscales to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   lambdax   lambday   lambday\n")
+    # Write data in scientific format with 15 digits
+    for i = 1:length(x)-1
+        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", λx[i]))   $(@sprintf("%.15e", λy[i]))   $(@sprintf("%.15e", λz[i]))\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write out Kolmogorov microscales to a space delimited text file
+function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1})
+    # Make file name
+    filename = "data/kolmogorov_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing Kolmogorov microscales to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   etax   etay   etaz\n")
+    # Write data in scientific format with 15 digits
+    for i = 1:length(x)-1
+        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", ηx[i]))   $(@sprintf("%.15e", ηy[i]))   $(@sprintf("%.15e", ηz[i]))\n")
     end
     # Close file
     close(f)
