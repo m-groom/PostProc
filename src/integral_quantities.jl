@@ -20,7 +20,7 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     tEnd = report("Finished calculating directional length scales...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Write directional length scales to file
-    # writeLengthScales(t, λx, λyz, ηx, ηyz)
+    writeLengthScales(t, x[:, 1, 1], λx, λyz, ηx, ηyz, x0)
 
 end
 
@@ -46,7 +46,7 @@ function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Ar
     R33 = zeros(Float64, length(rz)) # <w'(x)w'(x+rz)>
     nPtsInv = 1.0 / (grid.Ny * grid.Nz)
     # Find index where x = x0
-    i = argmin(abs.(x[:, 1, 1] .- x0))
+    i = argmin(abs.(x .- x0))
     # Loop over all cells
     for k = 1:grid.Nz
         for j = 1:grid.Ny
@@ -188,13 +188,13 @@ function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Flo
         for j = 1:grid.Ny
             for i = 1:grid.Nx
                 DInv = 1.0 / Q[i, j, k, nVars-3]
-                U = Q[i, j, k, 1] * DInv - QBar.UBar[i]
-                V = Q[i, j, k, 2] * DInv - QBar.VBar[i]
-                W = Q[i, j, k, 3] * DInv - QBar.WBar[i]
+                u = Q[i, j, k, 1] * DInv - QBar.UBar[i]
+                v = Q[i, j, k, 2] * DInv - QBar.VBar[i]
+                w = Q[i, j, k, 3] * DInv - QBar.WBar[i]
                 # Calculate Reynolds stresses
-                R11[i] = R11[i] + U * U
-                R22[i] = R22[i] + V * V
-                R33[i] = R33[i] + W * W
+                R11[i] = R11[i] + u * u
+                R22[i] = R22[i] + v * v
+                R33[i] = R33[i] + w * w
                 # Compute velocity derivatives
                 Uii = dUdX(x, Q[:, j, k, 1], i) # du/dx
                 Uji = dUdX(x, Q[:, j, k, 2], j) # dv/dx
@@ -226,9 +226,9 @@ function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Flo
     λy = sqrt.(R22 ./ dvdySquared)
     λz = sqrt.(R33 ./ dwdzSquared)
     λyz = 0.5 * (λy + λz)
-    ηx = 0.0
-    ηy = 0.0
-    ηz = 0.0
+    ηx = zeros(Float64, grid.Nx) 
+    ηy = zeros(Float64, grid.Nx) 
+    ηz = zeros(Float64, grid.Nx) 
     ηyz = 0.5 * (ηy + ηz)
 
     return λx, λyz, ηx, ηyz

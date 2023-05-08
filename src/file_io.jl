@@ -285,7 +285,7 @@ function writeCorrelationLengths(t::Float64, Λx::Float64, Λyz::Float64)
     # Append to file
     f = open(filename, "a")
     # Write header
-    write(f, "# t   Lx   Lyz\n")
+    write(f, "# t   Lambdax   Lambdayz\n")
     # Write data in scientific format with 15 digits
     write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", Λx))   $(@sprintf("%.15e", Λyz))\n")
     # Close file
@@ -305,6 +305,23 @@ function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float
     for i = 1:length(x)-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", R11[i]))   $(@sprintf("%.15e", R22[i]))   $(@sprintf("%.15e", R33[i]))\n")
     end
+    # Close file
+    close(f)
+end
+
+# Function to write length scales to a space delimited text file
+function writeLengthScales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1}, λyz::Array{Float64,1}, ηx::Array{Float64,1}, ηyz::Array{Float64,1}, x0::Float64)
+    # Get filename
+    filename = "data/lengthScales.dat"
+    # Get location of interface
+    i0 = argmin(abs.(x .- x0))
+    report("Writing length scales to file $filename")
+    # Append to file
+    f = open(filename, "a")
+    # Write header
+    write(f, "# t   lambdax   lambdayz   etax   etayz\n")
+    # Write data in scientific format with 15 digits
+    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", λx[i0]))   $(@sprintf("%.15e", λyz[i0]))   $(@sprintf("%.15e", ηx[i0]))   $(@sprintf("%.15e", ηyz[i0]))\n")
     # Close file
     close(f)
 end
