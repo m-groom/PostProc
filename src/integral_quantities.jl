@@ -7,6 +7,28 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     R11, R21, R31, R12, R22, R32, R13, R23, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, nVars, x0)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
+    # Calculate correlation lengths
+
+    # # Plot velocity correlations
+    # plt.figure(1)
+    # plt.plot(R11, label="R11")
+    # plt.plot(R21, label="R21")
+    # plt.plot(R31, label="R31")
+    # plt.legend()
+    # plt.savefig("correlations_x.png")
+    # plt.figure(2)
+    # plt.plot(R12, label="R12")
+    # plt.plot(R22, label="R22")
+    # plt.plot(R32, label="R32")
+    # plt.legend()
+    # plt.savefig("correlations_y.png")
+    # plt.figure(3)
+    # plt.plot(R13, label="R13")
+    # plt.plot(R23, label="R23")
+    # plt.plot(R33, label="R33")
+    # plt.legend()
+    # plt.savefig("correlations_z.png")
+
     # Calculate directional length scales
     # λx, λyz, ηx, ηyz = calcLengthScales(x, y, z, Q, QBar, grid, nVars)
 
@@ -38,7 +60,7 @@ function calcVelocityCorrelation(x::Array{Float32,3}, y::Array{Float32,3}, z::Ar
     # Loop over all cells
     for k = 1:grid.Nz
         for j = 1:grid.Ny
-            # Calculate fluctuating velocities at (i0,j,k)
+            # Calculate fluctuating velocities at (i,j,k)
             DaInv = 1.0 / Q[i, j, k, nVars-3]
             Ua = Q[i, j, k, 1] * DaInv - QBar.UBar[i]
             Va = Q[i, j, k, 2] * DaInv - QBar.VBar[i]
@@ -112,6 +134,19 @@ function calcVelocityCorrelation(x::Array{Float32,3}, y::Array{Float32,3}, z::Ar
     R13 = R13 * nPtsInv
     R23 = R23 * nPtsInv
     R33 = R33 * nPtsInv
+    # Normalise by Rab(0)
+    i0 = Int(ceil(length(rx) / 2))
+    R11 = R11 / R11[i0]
+    R21 = R21 / R21[i0]
+    R31 = R31 / R31[i0]
+    j0 = Int(ceil(length(ry) / 2))
+    R12 = R12 / R12[j0]
+    R22 = R22 / R22[j0]
+    R32 = R32 / R32[j0]
+    k0 = Int(ceil(length(rz) / 2))
+    R13 = R13 / R13[k0]
+    R23 = R23 / R23[k0]
+    R33 = R33 / R33[k0]
 
     return R11, R21, R31, R12, R22, R32, R13, R23, R33
 
