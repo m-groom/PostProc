@@ -4,10 +4,11 @@
 function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
-    R11, R21, R31, R12, R22, R32, R13, R23, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, nVars, x0)
+    R11, R21, R31, R12, R22, R32, R13, R23, R33 = calcVelocityCorrelation(x[:,1,1], y[1,:,1], z[1,1,:], Q, QBar, grid, nVars, x0)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate correlation lengths
+    # Λx, Λyz = calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
 
     # # Plot velocity correlations
     # plt.figure(1)
@@ -35,15 +36,15 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
 end
 
 # Function to calculate velocity correlation tensor at x = x0
-function calcVelocityCorrelation(x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
+function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
     # Find index where x = xL
-    iL = argmin(abs.(x[:, 1, 1] .- grid.xL))
+    iL = argmin(abs.(x .- grid.xL))
     # Find index where x = xR
-    iR = argmin(abs.(x[:, 1, 1] .- grid.xR))
+    iR = argmin(abs.(x .- grid.xR))
     # Get separation directions
-    rx = x[iL:iR, 1, 1] .- 0.5 * x[iR, 1, 1]
-    ry = y[1, :, 1] .- 0.5 * y[1, end, 1]
-    rz = z[1, 1, :] .- 0.5 * z[1, 1, end]
+    rx = x[iL:iR] .- 0.5 * x[iR]
+    ry = y .- 0.5 * y[end]
+    rz = z .- 0.5 * z[end]
     # Initialise arrays
     R11 = zeros(Float64, length(rx))
     R21 = zeros(Float64, length(rx))
@@ -68,8 +69,8 @@ function calcVelocityCorrelation(x::Array{Float32,3}, y::Array{Float32,3}, z::Ar
             # Calculate correlations in the x direction
             for ii in eachindex(rx)
                 # Get index of point to calculate flucuation at
-                xp = x[i, 1, 1] + rx[ii]
-                idx = argmin(abs.(x[:, 1, 1] .- xp))
+                xp = x[i] + rx[ii]
+                idx = argmin(abs.(x .- xp))
                 # Calculate fluctuating velocities at (idx,j,k)
                 DbInv = 1.0 / Q[idx, j, k, nVars-3]
                 Ub = Q[idx, j, k, 1] * DbInv - QBar.UBar[idx]
@@ -83,14 +84,14 @@ function calcVelocityCorrelation(x::Array{Float32,3}, y::Array{Float32,3}, z::Ar
             # Calculate correlations in the y direction
             for jj in eachindex(ry)
                 # Get index of point to calculate flucuation at
-                yp = y[1, j, 1] + ry[jj]
+                yp = y[j] + ry[jj]
                 # Restrict y to be within 0 and 2π
                 if yp < grid.yL
                     yp = yp + (grid.yR - grid.yL)
                 elseif yp > grid.yR
                     yp = yp - (grid.yR - grid.yL)
                 end
-                idx = argmin(abs.(y[1, :, 1] .- yp))
+                idx = argmin(abs.(y .- yp))
                 # Calculate fluctuating velocities at (i,idx,k)
                 DbInv = 1.0 / Q[i, idx, k, nVars-3]
                 Ub = Q[i, idx, k, 1] * DbInv - QBar.UBar[i]
@@ -104,14 +105,14 @@ function calcVelocityCorrelation(x::Array{Float32,3}, y::Array{Float32,3}, z::Ar
             # Calculate correlations in the z direction
             for kk in eachindex(rz)
                 # Get index of point to calculate flucuation at
-                zp = z[1, 1, k] + rz[kk]
+                zp = z[k] + rz[kk]
                 # Restrict z to be within 0 and 2π
                 if zp < grid.zL
                     zp = zp + (grid.zR - grid.zL)
                 elseif zp > grid.zR
                     zp = zp - (grid.zR - grid.zL)
                 end
-                idx = argmin(abs.(z[1, 1, :] .- zp))
+                idx = argmin(abs.(z .- zp))
                 # Calculate fluctuating velocities at (i,j,idx)
                 DbInv = 1.0 / Q[i, j, idx, nVars-3]
                 Ub = Q[i, j, idx, 1] * DbInv - QBar.UBar[i]
@@ -151,3 +152,8 @@ function calcVelocityCorrelation(x::Array{Float32,3}, y::Array{Float32,3}, z::Ar
     return R11, R21, R31, R12, R22, R32, R13, R23, R33
 
 end
+
+# # Function to calculate (longitudinal) correlation lengths
+# function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, grid::rectilinearGrid)
+
+# end

@@ -4,3 +4,4 @@ src/*.so
 *.vts
 *.vtr
 processing.log
+*.png
