@@ -8,12 +8,19 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate correlation lengths
+    tStart = report("Calculating correlation lengths", 1)
     Λx, Λyz = calcCorrelationLengths(R11, R22, R33, x[:, 1, 1], y[1, :, 1], z[1, 1, :], grid)
+    tEnd = report("Finished calculating correlation lengths...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
     # Write correlation lengths to file
     writeCorrelationLengths(t, Λx, Λyz)
-
     # Calculate directional length scales
-    # λx, λyz, ηx, ηyz = calcLengthScales(x, y, z, Q, QBar, grid, nVars)
+    tStart = report("Calculating directional length scales", 1)
+    λx, λyz, ηx, ηyz = calcLengthScales(x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, t)
+    tEnd = report("Finished calculating directional length scales...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
+    # Write directional length scales to file
+    # writeLengthScales(t, λx, λyz, ηx, ηyz)
 
 end
 
@@ -28,15 +35,15 @@ function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Ar
     ry = y .- 0.5 * y[end]
     rz = z .- 0.5 * z[end]
     # Initialise arrays
-    R11 = zeros(Float64, length(rx))
-    R21 = zeros(Float64, length(rx))
-    R31 = zeros(Float64, length(rx))
-    R12 = zeros(Float64, length(ry))
-    R22 = zeros(Float64, length(ry))
-    R32 = zeros(Float64, length(ry))
-    R13 = zeros(Float64, length(rz))
-    R23 = zeros(Float64, length(rz))
-    R33 = zeros(Float64, length(rz))
+    R11 = zeros(Float64, length(rx)) # <u'(x)u'(x+rx)>
+    R21 = zeros(Float64, length(rx)) # <v'(x)v'(x+rx)>
+    R31 = zeros(Float64, length(rx)) # <w'(x)w'(x+rx)>
+    R12 = zeros(Float64, length(ry)) # <u'(x)u'(x+ry)>
+    R22 = zeros(Float64, length(ry)) # <v'(x)v'(x+ry)>
+    R32 = zeros(Float64, length(ry)) # <w'(x)w'(x+ry)>
+    R13 = zeros(Float64, length(rz)) # <u'(x)u'(x+rz)>
+    R23 = zeros(Float64, length(rz)) # <v'(x)v'(x+rz)>
+    R33 = zeros(Float64, length(rz)) # <w'(x)w'(x+rz)>
     nPtsInv = 1.0 / (grid.Ny * grid.Nz)
     # Find index where x = x0
     i = argmin(abs.(x[:, 1, 1] .- x0))
@@ -166,3 +173,64 @@ function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R3
 
 end
 
+# Function to calculate Taylor and Kolmorogov microscales
+function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, t::Float64)
+    # Initialise arrays
+    R11 = zeros(Float64, grid.Nx) # <u'u'>
+    R22 = zeros(Float64, grid.Nx) # <v'v'>
+    R33 = zeros(Float64, grid.Nx) # <w'w'>
+    dudxSquared = zeros(Float64, grid.Nx) # <(du/dx)^2>
+    dvdySquared = zeros(Float64, grid.Nx) # <(dv/dy)^2>
+    dwdzSquared = zeros(Float64, grid.Nx) # <(dw/dz)^2>
+    nPtsInv = 1.0 / (grid.Ny * grid.Nz)
+    # Loop over all cells
+    for k = 1:grid.Nz
+        for j = 1:grid.Ny
+            for i = 1:grid.Nx
+                DInv = 1.0 / Q[i, j, k, nVars-3]
+                U = Q[i, j, k, 1] * DInv - QBar.UBar[i]
+                V = Q[i, j, k, 2] * DInv - QBar.VBar[i]
+                W = Q[i, j, k, 3] * DInv - QBar.WBar[i]
+                # Calculate Reynolds stresses
+                R11[i] = R11[i] + U * U
+                R22[i] = R22[i] + V * V
+                R33[i] = R33[i] + W * W
+                # Compute velocity derivatives
+                Uii = dUdX(x, Q[:, j, k, 1], i) # du/dx
+                Uji = dUdX(x, Q[:, j, k, 2], j) # dv/dx
+                Uki = dUdX(x, Q[:, j, k, 3], i) # dw/dx
+                Uij = dUdY(y, Q[i, :, k, 1], j) # du/dy
+                Ujj = dUdY(y, Q[i, :, k, 2], j) # dv/dy
+                Ukj = dUdY(y, Q[i, :, k, 3], j) # dw/dy
+                Uik = dUdY(z, Q[i, j, :, 1], k) # du/dz
+                Ujk = dUdY(z, Q[i, j, :, 2], k) # dv/dz
+                Ukk = dUdY(z, Q[i, j, :, 3], k) # dw/dz
+                # Compute square of velocity derivatives
+                dudxSquared[i] = dudxSquared[i] + Uii * Uii
+                dvdySquared[i] = dvdySquared[i] + Ujj * Ujj
+                dwdzSquared[i] = dwdzSquared[i] + Ukk * Ukk
+            end
+        end
+    end
+    # Divide by number of points to get averages
+    R11 = R11 * nPtsInv
+    R22 = R22 * nPtsInv
+    R33 = R33 * nPtsInv
+    dudxSquared = dudxSquared * nPtsInv
+    dvdySquared = dvdySquared * nPtsInv
+    dwdzSquared = dwdzSquared * nPtsInv
+    # # Write out Reynolds stresses to file
+    # writeReynoldsStresses(t, x, R11, R22, R33)
+
+    λx = sqrt.(R11 ./ dudxSquared)
+    λy = sqrt.(R22 ./ dvdySquared)
+    λz = sqrt.(R33 ./ dwdzSquared)
+    λyz = 0.5 * (λy + λz)
+    ηx = 0.0
+    ηy = 0.0
+    ηz = 0.0
+    ηyz = 0.5 * (ηy + ηz)
+
+    return λx, λyz, ηx, ηyz
+
+end

@@ -7,8 +7,8 @@ import Dates
 import WriteVTK
 using Printf
 # Load functions
-include("src/file_io.jl")
 include("src/structs.jl")
+include("src/file_io.jl")
 include("src/plane_averages.jl")
 include("src/integral_quantities.jl")
 include("src/tools_integral.jl")
