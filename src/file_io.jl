@@ -19,6 +19,8 @@ end
 
 # function to read settings for the post.par file
 function readSettings(filename::String)
+    # Initialise viscosity
+    μ = zeros(2) # Assumes two species
     report("Reading settings from file $filename")
     # Open file
     file = open(filename, "r")
@@ -38,6 +40,11 @@ function readSettings(filename::String)
     startTime = parse(Float64, split(readline(file), "#")[1])
     Δt = parse(Float64, split(readline(file), "#")[1])
     nFiles = parse(Int, split(readline(file), "#")[1])
+    # Read viscosities
+    if (nVars >= 10)
+        μ[1] = parse(Float64, split(readline(file), "#")[1])
+        μ[2] = parse(Float64, split(readline(file), "#")[1])
+    end
     # Close file
     close(file)
     # Package grid settings into a struct
@@ -45,7 +52,7 @@ function readSettings(filename::String)
     # Package input file settings into a struct
     input = inputSettings(nVars, startTime, Δt, nFiles)
 
-    return grid, input, x0
+    return grid, input, x0, μ
 
 end
 

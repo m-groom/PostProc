@@ -31,4 +31,5 @@ struct planeAverage
     Y1Bar::Array{Float64,1}
     Z1Bar::Array{Float64,1}
     Z1Z2Bar::Array{Float64,1}
+    muBar::Array{Float64,1}
 end

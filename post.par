@@ -12,3 +12,5 @@
 0.0                 # startTime: output time of first input file (Float64)
 0.005               # ΔT: output interval of input files (Float64)
 1                   # nFiles: number of input files (Int)
+0.00625             # μ[1]: dynamic viscositiy for species 1 (Float64)
+0.00625             # μ[2]: dynamic viscositiy for species 2 (Float64)

@@ -234,8 +234,6 @@ function calcLengthScales(x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Flo
     dudxSquared = dudxSquared * nPtsInv
     dvdySquared = dvdySquared * nPtsInv
     dwdzSquared = dwdzSquared * nPtsInv
-    # # Write out Reynolds stresses to file
-    # writeReynoldsStresses(t, x, R11, R22, R33)
 
     λx = sqrt.(R11 ./ dudxSquared)
     λy = sqrt.(R22 ./ dvdySquared)
