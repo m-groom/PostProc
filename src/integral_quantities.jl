@@ -4,31 +4,11 @@
 function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
-    R11, R21, R31, R12, R22, R32, R13, R23, R33 = calcVelocityCorrelation(x[:,1,1], y[1,:,1], z[1,1,:], Q, QBar, grid, nVars, x0)
+    R11, R21, R31, R12, R22, R32, R13, R23, R33 = calcVelocityCorrelation(x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate correlation lengths
-    # Λx, Λyz = calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
-
-    # # Plot velocity correlations
-    # plt.figure(1)
-    # plt.plot(R11, label="R11")
-    # plt.plot(R21, label="R21")
-    # plt.plot(R31, label="R31")
-    # plt.legend()
-    # plt.savefig("correlations_x.png")
-    # plt.figure(2)
-    # plt.plot(R12, label="R12")
-    # plt.plot(R22, label="R22")
-    # plt.plot(R32, label="R32")
-    # plt.legend()
-    # plt.savefig("correlations_y.png")
-    # plt.figure(3)
-    # plt.plot(R13, label="R13")
-    # plt.plot(R23, label="R23")
-    # plt.plot(R33, label="R33")
-    # plt.legend()
-    # plt.savefig("correlations_z.png")
+    Λx, Λyz = calcCorrelationLengths(R11, R22, R33, x[:, 1, 1], y[1, :, 1], z[1, 1, :], grid)
 
     # Calculate directional length scales
     # λx, λyz, ηx, ηyz = calcLengthScales(x, y, z, Q, QBar, grid, nVars)
@@ -153,7 +133,32 @@ function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Ar
 
 end
 
-# # Function to calculate (longitudinal) correlation lengths
-# function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, grid::rectilinearGrid)
+# Function to calculate (longitudinal) correlation lengths
+function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, grid::rectilinearGrid)
+    # Find index where x = xL
+    iL = argmin(abs.(x .- grid.xL))
+    # Find index where x = xR
+    iR = argmin(abs.(x .- grid.xR))
+    # Get separation directions
+    rx = x[iL:iR] .- 0.5 * x[iR]
+    ry = y .- 0.5 * y[end]
+    rz = z .- 0.5 * z[end]
+    # Get location of maximum
+    i0 = Int(ceil(length(rx) / 2))
+    j0 = Int(ceil(length(ry) / 2))
+    k0 = Int(ceil(length(rz) / 2))
+    # Get location of first zero crossing
+    i2 = i0 - 1 + findfirst(x -> x < 0.0, R11[i0:end]) - 1
+    i1 = findlast(x -> x < 0.0, R11[1:i0]) + 1
+    j2 = j0 - 1 + findfirst(x -> x < 0.0, R22[j0:end]) - 1
+    j1 = findlast(x -> x < 0.0, R22[1:j0]) + 1
+    k2 = k0 - 1 + findfirst(x -> x < 0.0, R33[k0:end]) - 1
+    k1 = findlast(x -> x < 0.0, R33[1:k0]) + 1
 
-# end
+
+    Λx = 0.0
+    Λyz = 0.0
+
+    return Λx, Λyz
+
+end
