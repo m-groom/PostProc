@@ -291,8 +291,10 @@ function writeCorrelationLengths(t::Float64, Λx::Float64, Λyz::Float64)
     report("Writing correlation lengths to file $filename")
     # Append to file
     f = open(filename, "a")
-    # Write header
-    write(f, "# t   Lambdax   Lambdayz\n")
+    # Write header if file is empty
+    if (filesize(filename) == 0)
+        write(f, "# t   Lambdax   Lambdayz\n")
+    end
     # Write data in scientific format with 15 digits
     write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", Λx))   $(@sprintf("%.15e", Λyz))\n")
     # Close file
@@ -325,8 +327,10 @@ function writeLengthScales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1
     report("Writing length scales to file $filename")
     # Append to file
     f = open(filename, "a")
-    # Write header
-    write(f, "# t   lambdax   lambdayz   etax   etayz\n")
+    # Write header if file is empty
+    if (filesize(filename) == 0)
+        write(f, "# t   lambdax   lambdayz   etax   etayz\n")
+    end
     # Write data in scientific format with 15 digits
     write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", λx[i0]))   $(@sprintf("%.15e", λyz[i0]))   $(@sprintf("%.15e", ηx[i0]))   $(@sprintf("%.15e", ηyz[i0]))\n")
     # Close file
