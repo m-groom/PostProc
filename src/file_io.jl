@@ -21,6 +21,7 @@ end
 function readSettings(filename::String)
     # Initialise viscosity
     μ = zeros(2) # Assumes two species
+    W = zeros(2) # Assumes two species
     report("Reading settings from file $filename")
     # Open file
     file = open(filename, "r")
@@ -40,10 +41,12 @@ function readSettings(filename::String)
     startTime = parse(Float64, split(readline(file), "#")[1])
     Δt = parse(Float64, split(readline(file), "#")[1])
     nFiles = parse(Int, split(readline(file), "#")[1])
-    # Read viscosities
+    # Read viscosities and molecular weights
     if (nVars >= 10)
         μ[1] = parse(Float64, split(readline(file), "#")[1])
         μ[2] = parse(Float64, split(readline(file), "#")[1])
+        W[1] = parse(Float64, split(readline(file), "#")[1])
+        W[2] = parse(Float64, split(readline(file), "#")[1])
     end
     # Close file
     close(file)
@@ -51,8 +54,10 @@ function readSettings(filename::String)
     grid = rectilinearGrid(Nx, Ny, Nz, xL, xR, yL, yR, zL, zR)
     # Package input file settings into a struct
     input = inputSettings(nVars, startTime, Δt, nFiles)
+    # Package thermodynamic properties into a struct
+    thermo = thermodynamicProperties(μ, W)
 
-    return grid, input, x0, μ
+    return grid, input, thermo, x0
 
 end
 

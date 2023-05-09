@@ -21,7 +21,11 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     report("Elapsed time: $(tEnd - tStart)")
     # Write directional length scales to file
     writeLengthScales(t, λx, λyz, ηx, ηyz)
-    # TODO: calculate integral width
+    # Calculate integral width
+    tStart = report("Calculating integral width", 1)
+    W, H, Wb, Ws, Hb, Hs = calcIntegralWidth(t, QBar, x0)
+    tEnd = report("Finished calculating integral width...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
 end
 
 # Function to calculate velocity correlation tensor at x = x0

@@ -21,6 +21,12 @@ struct inputSettings
     nFiles::Int
 end
 
+# Struct to store thermodynamic properties
+struct thermodynamicProperties
+    μ::Array{Float64,1}
+    W::Array{Float64,1}
+end
+
 # Struct to store plane averages
 struct planeAverage
     x::Array{Float64,1}

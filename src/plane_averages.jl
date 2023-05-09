@@ -1,7 +1,12 @@
 # Functions for calculating and manipulating plane averages
 
 # Function to calculate y-z plane averages
-function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64, μ::Array{Float64,1})
+function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64, thermo::thermodynamicProperties)
+    # Extract thermodynamic properties
+    μ = thermo.μ
+    W = thermo.W
+    # Calculate specific gas constants for each species
+    R = 8314.46261815324 ./ W
     # Initialise sums
     rhoBar = zeros(Float64, Nx)
     UBar = zeros(Float64, Nx)
@@ -29,6 +34,10 @@ function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, N
                 if (nVars == 12)
                     Z1Bar[i] = Z1Bar[i] + Q[i, j, k, 7]
                     Z1Z2Bar[i] = Z1Z2Bar[i] + Q[i, j, k, 7] * Q[i, j, k, 8]
+                elseif (nVars == 10)
+                    Z1 = volumeFraction(Y1, R)
+                    Z1Bar[i] = Z1Bar[i] + Z1
+                    Z1Z2Bar[i] = Z1Z2Bar[i] + Z1 * (1.0 - Z1)
                 end
             end
         end
@@ -44,4 +53,36 @@ function getPlaneAverages(x::Array{Float32,3}, Q::Array{Float32,4}, Nx::Int64, N
     # Package into a struct
     QBar = planeAverage(x[:, 1, 1], rhoBar, UBar, VBar, WBar, Y1Bar, Z1Bar, Z1Z2Bar, muBar, nuBar)
     return QBar
+end
+
+# Function to calculate volume fraction from mass fraction (note: assumes species 1)
+function volumeFraction(Y1::Float64, R::Array{Float64,1})
+    # Calculate denominator
+    sumRY = R[1]*Y1 + R[2]*(1.0 - Y1)
+    # Calculate volume fraction
+    Z1 = R[1]*Y1 / sumRY
+    return Z1
+end
+
+# Function to calculate the integral width
+function calcIntegralWidth(t::Float64, QBar::planeAverage, x0::Float64)
+    # Extract plane averages
+    x = QBar.x
+    Z1 = QBar.Z1Bar
+    Z2 = 1.0 .- Z1
+    # # Get location of interface
+    # i0 = argmin(abs.(x .- x0))
+    # Calculate integral width
+    W = 6.0 * midpoint(x, Z1 .* Z2)
+    # Calculate product width
+    H = 2.0 * midpoint(x, min.(Z1, Z2))
+    # # Calculate integral bubble and spike heights
+    # Wb = 6.0 * midpoint(x[1:i0], Z1[1:i0-1] .* Z2[1:i0-1])
+    # Ws = 6.0 * midpoint(x[i0:end], Z1[i0:end] .* Z2[i0:end])
+    # # Calculate product bubble and spike heights
+    # Hb = 2.0 * midpoint(x[1:i0], min.(Z1[1:i0-1], Z2[1:i0-1]))
+    # Hs = 2.0 * midpoint(x[i0:end], min.(Z1[i0:end], Z2[i0:end]))
+
+    return W, H #, Wb, Ws, Hb, Hs
+
 end

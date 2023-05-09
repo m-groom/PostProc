@@ -1,8 +1,13 @@
 # Tools for use in functions from integral_quantities.jl
 
-# Trapezoidal rule
+# Trapezoidal rule integration (x is a vector of nodes, y is a vector of values at nodes)
 function trapz(x::Array{Float64,1}, y::Array{Float64,1})
     return sum(0.5 .* (x[2:end] .- x[1:end-1]) .* (y[2:end] .+ y[1:end-1]))
+end
+
+# Midpoint rule integration (x is a vector of nodes, y is a vector of values at cell centres)
+function midpoint(x::Array{Float64,1}, y::Array{Float64,1})
+    return sum((x[2:end] .- x[1:end-1]) .* y[1:end])
 end
 
 # Function to compute a first order derivative in the non-homogeneous direction

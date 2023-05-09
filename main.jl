@@ -14,7 +14,7 @@ include("src/integral_quantities.jl")
 include("src/tools_integral.jl")
 
 # Read parameter file
-grid, input, x0, μ = readSettings("post.par")
+grid, input, thermo, x0 = readSettings("post.par")
 # Get first time step
 t = input.startTime
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
@@ -34,7 +34,7 @@ writeSolution(t, x, y, z, Q, input.nVars)
 writeSlice(t, x, y, z, Q, input.nVars, "xy", x0)
 
 # Calculate plane averages
-QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, μ)
+QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
 
 # Write plane averages
 writePlaneAverages(t, QBar)
