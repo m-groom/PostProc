@@ -390,3 +390,20 @@ function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{
     # Close file
     close(f)
 end
+
+# Function to write integral width to a space delimited text file
+function writeIntegralWidth(t::Float64, W::Float64,H::Float64)
+    # Get filename
+    filename = "data/integralWidth.dat"
+    report("Writing integral and product widths to file $filename")
+    # Append to file
+    f = open(filename, "a")
+    # Write header if file is empty
+    if (filesize(filename) == 0)
+        write(f, "# t   W   H\n")
+    end
+    # Write data in scientific format with 15 digits
+    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", W))   $(@sprintf("%.15e", H))\n")
+    # Close file
+    close(f)
+end

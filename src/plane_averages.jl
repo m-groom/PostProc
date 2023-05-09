@@ -65,24 +65,18 @@ function volumeFraction(Y1::Float64, R::Array{Float64,1})
 end
 
 # Function to calculate the integral width
-function calcIntegralWidth(t::Float64, QBar::planeAverage, x0::Float64)
+function calcIntegralWidth(t::Float64, QBar::planeAverage)
     # Extract plane averages
     x = QBar.x
     Z1 = QBar.Z1Bar
     Z2 = 1.0 .- Z1
-    # # Get location of interface
-    # i0 = argmin(abs.(x .- x0))
     # Calculate integral width
     W = 6.0 * midpoint(x, Z1 .* Z2)
     # Calculate product width
     H = 2.0 * midpoint(x, min.(Z1, Z2))
-    # # Calculate integral bubble and spike heights
-    # Wb = 6.0 * midpoint(x[1:i0], Z1[1:i0-1] .* Z2[1:i0-1])
-    # Ws = 6.0 * midpoint(x[i0:end], Z1[i0:end] .* Z2[i0:end])
-    # # Calculate product bubble and spike heights
-    # Hb = 2.0 * midpoint(x[1:i0], min.(Z1[1:i0-1], Z2[1:i0-1]))
-    # Hs = 2.0 * midpoint(x[i0:end], min.(Z1[i0:end], Z2[i0:end]))
+    # Write W and H to file
+    writeIntegralWidth(t, W, H)
 
-    return W, H #, Wb, Ws, Hb, Hs
+    return W, H
 
 end

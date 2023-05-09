@@ -23,7 +23,7 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     writeLengthScales(t, λx, λyz, ηx, ηyz)
     # Calculate integral width
     tStart = report("Calculating integral width", 1)
-    W, H, Wb, Ws, Hb, Hs = calcIntegralWidth(t, QBar, x0)
+    W, H = calcIntegralWidth(t, QBar)
     tEnd = report("Finished calculating integral width...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
@@ -40,13 +40,7 @@ function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Ar
     rz = z .- 0.5 * z[end]
     # Initialise arrays
     R11 = zeros(Float64, length(rx)) # <u'(x)u'(x+rx)>
-    # R21 = zeros(Float64, length(rx)) # <v'(x)v'(x+rx)>
-    # R31 = zeros(Float64, length(rx)) # <w'(x)w'(x+rx)>
-    # R12 = zeros(Float64, length(ry)) # <u'(x)u'(x+ry)>
     R22 = zeros(Float64, length(ry)) # <v'(x)v'(x+ry)>
-    # R32 = zeros(Float64, length(ry)) # <w'(x)w'(x+ry)>
-    # R13 = zeros(Float64, length(rz)) # <u'(x)u'(x+rz)>
-    # R23 = zeros(Float64, length(rz)) # <v'(x)v'(x+rz)>
     R33 = zeros(Float64, length(rz)) # <w'(x)w'(x+rz)>
     nPtsInv = 1.0 / (grid.Ny * grid.Nz)
     # Find index where x = x0
@@ -67,12 +61,8 @@ function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Ar
                 # Calculate fluctuating velocities at (idx,j,k)
                 DbInv = 1.0 / Q[idx, j, k, nVars-3]
                 Ub = Q[idx, j, k, 1] * DbInv - QBar.UBar[idx]
-                # Vb = Q[idx, j, k, 2] * DbInv - QBar.VBar[idx]
-                # Wb = Q[idx, j, k, 3] * DbInv - QBar.WBar[idx]
                 # Calculate velocity correlation tensor components in the x direction
                 R11[ii] = R11[ii] + Ua * Ub
-                # R21[ii] = R21[ii] + Va * Vb
-                # R31[ii] = R31[ii] + Wa * Wb
             end
             # Calculate correlations in the y direction
             for jj in eachindex(ry)
@@ -87,13 +77,9 @@ function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Ar
                 idx = argmin(abs.(y .- yp))
                 # Calculate fluctuating velocities at (i,idx,k)
                 DbInv = 1.0 / Q[i, idx, k, nVars-3]
-                # Ub = Q[i, idx, k, 1] * DbInv - QBar.UBar[i]
                 Vb = Q[i, idx, k, 2] * DbInv - QBar.VBar[i]
-                # Wb = Q[i, idx, k, 3] * DbInv - QBar.WBar[i]
                 # Calculate velocity correlation tensor components in the y direction
-                # R12[jj] = R12[jj] + Ua * Ub
                 R22[jj] = R22[jj] + Va * Vb
-                # R32[jj] = R32[jj] + Wa * Wb
             end
             # Calculate correlations in the z direction
             for kk in eachindex(rz)
@@ -108,38 +94,22 @@ function calcVelocityCorrelation(x::Array{Float32,1}, y::Array{Float32,1}, z::Ar
                 idx = argmin(abs.(z .- zp))
                 # Calculate fluctuating velocities at (i,j,idx)
                 DbInv = 1.0 / Q[i, j, idx, nVars-3]
-                # Ub = Q[i, j, idx, 1] * DbInv - QBar.UBar[i]
-                # Vb = Q[i, j, idx, 2] * DbInv - QBar.VBar[i]
                 Wb = Q[i, j, idx, 3] * DbInv - QBar.WBar[i]
                 # Calculate velocity correlation tensor components in the z direction
-                # R13[kk] = R13[kk] + Ua * Ub
-                # R23[kk] = R23[kk] + Va * Vb
                 R33[kk] = R33[kk] + Wa * Wb
             end
         end
     end
     # Divide by number of points to get averages
     R11 = R11 * nPtsInv
-    # R21 = R21 * nPtsInv
-    # R31 = R31 * nPtsInv
-    # R12 = R12 * nPtsInv
     R22 = R22 * nPtsInv
-    # R32 = R32 * nPtsInv
-    # R13 = R13 * nPtsInv
-    # R23 = R23 * nPtsInv
     R33 = R33 * nPtsInv
     # Normalise by Rab(0)
     i0 = Int(ceil(length(rx) / 2))
     R11 = R11 / R11[i0]
-    # R21 = R21 / R21[i0]
-    # R31 = R31 / R31[i0]
     j0 = Int(ceil(length(ry) / 2))
-    # R12 = R12 / R12[j0]
     R22 = R22 / R22[j0]
-    # R32 = R32 / R32[j0]
     k0 = Int(ceil(length(rz) / 2))
-    # R13 = R13 / R13[k0]
-    # R23 = R23 / R23[k0]
     R33 = R33 / R33[k0]
 
     return R11, R22, R33
