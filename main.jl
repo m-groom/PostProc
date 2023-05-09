@@ -41,3 +41,6 @@ writePlaneAverages(t, QBar)
 
 # Calculate integral quantities
 calcIntegralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0)
+
+# Calculate spectral quantities
+calcSpectralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0)
