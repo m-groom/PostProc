@@ -9,8 +9,10 @@ function calcSpectralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     report("Elapsed time: $(tEnd - tStart)")
     # Write energy spectra to file
     writeEnergySpectra(t, κ, Ex, Ey, Ez) # TODO: add noise compensation factor when writing spectra
-    # TODO calcualte integral length
-    # E = sum(E1Dy .+ E1Dz)*Δκ
+    # Calculate integral length
+    Lyz = calcIntegralLength(κ, Ey, Ez, grid)
+    # Write integral length to file
+    writeIntegralLength(t, Lyz)
 end
 
 # Function to calculate radial power spectra at x = x0 for each velocity component
@@ -71,4 +73,19 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
 
     return E1Dx, E1Dy, E1Dz, κ1D
 
+end
+
+# Function to calculate integral length
+function calcIntegralLength(κ::Array{Int64, 1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid)
+    # Calculate spacing in κ
+    Ly = grid.yR - grid.yL
+    Lz = grid.zR - grid.zL
+    Δκy = 2.0 * pi / Ly
+    Δκz = 2.0 * pi / Lz
+    Δκ = max(Δκy, Δκz)
+    # Calculate integral length in y and z directions
+    Ly = (3.0 * pi / 4) * integrate(Ey[2:end] ./ κ[2:end], Δκ) / integrate(Ey[2:end], Δκ)
+    Lz = (3.0 * pi / 4) * integrate(Ez[2:end] ./ κ[2:end], Δκ) / integrate(Ez[2:end], Δκ)
+    # Calculate integral length in yz plane
+    return 0.5 * (Ly + Lz)
 end

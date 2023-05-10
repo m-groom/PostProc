@@ -424,3 +424,20 @@ function writeEnergySpectra(t::Float64, κ::Array{Int64, 1}, Ex::Array{Float64, 
     # Close file
     close(f)
 end
+
+# Function to write integral length to a space delimited text file
+function writeIntegralLength(t::Float64, Lyz::Float64)
+    # Get filename
+    filename = "data/integralLength.dat"
+    report("Writing integral length to file $filename")
+    # Append to file
+    f = open(filename, "a")
+    # Write header if file is empty
+    if (filesize(filename) == 0)
+        write(f, "# t   Lyz\n")
+    end
+    # Write data in scientific format with 15 digits
+    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", Lyz))\n")
+    # Close file
+    close(f)
+end
