@@ -179,13 +179,13 @@ function calcLengthScales(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
         for j = 1:grid.Ny
             for i = 1:grid.Nx
                 rhoInv = 1.0 / Q[i, j, k, nVars-3]
-                u = Q[i, j, k, 1] * rhoInv - QBar.UBar[i]
-                v = Q[i, j, k, 2] * rhoInv - QBar.VBar[i]
-                w = Q[i, j, k, 3] * rhoInv - QBar.WBar[i]
+                uPrime = Q[i, j, k, 1] * rhoInv - QBar.UBar[i]
+                vPrime = Q[i, j, k, 2] * rhoInv - QBar.VBar[i]
+                wPrime = Q[i, j, k, 3] * rhoInv - QBar.WBar[i]
                 # Calculate Reynolds stresses
-                R11[i] = R11[i] + u * u
-                R22[i] = R22[i] + v * v
-                R33[i] = R33[i] + w * w
+                R11[i] = R11[i] + uPrime * uPrime
+                R22[i] = R22[i] + vPrime * vPrime
+                R33[i] = R33[i] + wPrime * wPrime
                 # Compute velocity derivatives
                 Uii = dUdX(x, Q[:, j, k, 1], i) # du/dx
                 Uji = dUdX(x, Q[:, j, k, 2], j) # dv/dx
@@ -247,6 +247,7 @@ function calcLengthScales(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     writeKolmogorovMicroscales(t, x, ηx, ηy, ηz)
     # Get location of interface
     i0 = argmin(abs.(x .- x0))
+    # TODO print out total Reynolds stress at x0
 
     return λx[i0], λyz[i0], ηx[i0], ηyz[i0]
 

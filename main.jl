@@ -5,6 +5,7 @@ import PyPlot as plt
 import FortranFiles as FFile
 import Dates
 import WriteVTK
+import FFTW
 using Printf
 # Load functions
 include("src/structs.jl")
@@ -12,6 +13,8 @@ include("src/file_io.jl")
 include("src/plane_averages.jl")
 include("src/integral_quantities.jl")
 include("src/tools_integral.jl")
+include("src/spectral_quantities.jl")
+include("src/tools_spectral.jl")
 
 # Read parameter file
 grid, input, thermo, x0 = readSettings("post.par")
