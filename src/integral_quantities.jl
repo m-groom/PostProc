@@ -247,7 +247,6 @@ function calcLengthScales(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     writeKolmogorovMicroscales(t, x, ηx, ηy, ηz)
     # Get location of interface
     i0 = argmin(abs.(x .- x0))
-    # TODO print out total Reynolds stress at x0
 
     return λx[i0], λyz[i0], ηx[i0], ηyz[i0]
 

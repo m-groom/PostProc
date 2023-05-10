@@ -7,8 +7,17 @@ function calcSpectralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     Ex, Ey, Ez, κ = calcPowerSpectra(t, x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
-
-
+    # Write energy spectra to file
+    writeEnergySpectra(t, κ, Ex, Ey, Ez)
+    # Plot energy spectra
+    # plt.figure(1)
+    # plt.loglog(κ, Ex, label="u'")
+    # plt.loglog(κ, Ey, label="v'")
+    # plt.loglog(κ, Ez, label="w'")
+    # plt.xlabel("κ")
+    # plt.ylabel("E(κ)")
+    # plt.legend()
+    # plt.savefig("energy_spectra.png")
 end
 
 # Function to calculate radial power spectra at x = x0 for each velocity component
@@ -28,10 +37,9 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     E1Dz = zeros(Float64, κMax + 1) # Energy spectrum for w' at x = x0
     # Get location of interface
     i = argmin(abs.(x .- x0))
-    # Loop of cells
+    # Get fluctuating velocity components
     for k = 1:grid.Nz
         for j = 1:grid.Ny
-            # Get fluctuating velocity components
             rhoInv = 1.0 / Q[i, j, k, nVars-3]
             uPrime[j, k] = Q[i, j, k, 1] * rhoInv - QBar.UBar[i]
             vPrime[j, k] = Q[i, j, k, 2] * rhoInv - QBar.VBar[i]
@@ -68,7 +76,6 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
         E1Dy[idx] = E1Dy[idx] * area / num[idx]
         E1Dz[idx] = E1Dz[idx] * area / num[idx]
     end
-    # TODO print out total energy
 
     return E1Dx, E1Dy, E1Dz, κ1D
 

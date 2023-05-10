@@ -407,3 +407,20 @@ function writeIntegralWidth(t::Float64, W::Float64,H::Float64)
     # Close file
     close(f)
 end
+
+# Function to write energy spectra to a space delimited text file
+function writeEnergySpectra(t::Float64, κ::Array{Int64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1})
+    # Make file name
+    filename = "data/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing energy spectra to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# kappa   Ex   Ey   Ez\n")
+    # Write data in scientific format with 15 digits
+    for i = 1:length(κ)
+        write(f, "$(@sprintf("%.15e", κ[i]))   $(@sprintf("%.15e", Ex[i]))   $(@sprintf("%.15e", Ey[i]))   $(@sprintf("%.15e", Ez[i]))\n")
+    end
+    # Close file
+    close(f)
+end
