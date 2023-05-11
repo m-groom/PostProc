@@ -20,7 +20,7 @@ t1 = report("Starting post-processing", 1)
 # Read parameter file
 grid, input, thermo, x0, dataDir = readSettings("post.par")
 # Get first time step
-t = input.startTime
+t = 0.0
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
 x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
