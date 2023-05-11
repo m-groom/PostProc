@@ -409,7 +409,7 @@ function writeIntegralWidth(t::Float64, W::Float64,H::Float64)
 end
 
 # Function to write energy spectra to a space delimited text file
-function writeEnergySpectra(t::Float64, κ::Array{Int64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1})
+function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1})
     # Make file name
     filename = "data/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing energy spectra to file $filename")

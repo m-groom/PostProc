@@ -22,8 +22,8 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     κz = collect(FFTW.fftshift(FFTW.fftfreq(grid.Nz, grid.Nz)))
     Ly = grid.yR - grid.yL
     Lz = grid.zR - grid.zL
-    Δκy = 2.0 * pi / Ly
-    Δκz = 2.0 * pi / Lz
+    Δκy = 2.0 * π / Ly
+    Δκz = 2.0 * π / Lz
     Δκ = max(Δκy, Δκz)
     Δy = Ly / grid.Ny
     Δz = Lz / grid.Nz
@@ -36,7 +36,7 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     E1Dx = zeros(Float64, κMax + 1) # Energy spectrum for u' at x = x0
     E1Dy = zeros(Float64, κMax + 1) # Energy spectrum for v' at x = x0
     E1Dz = zeros(Float64, κMax + 1) # Energy spectrum for w' at x = x0
-    κ1D = collect(0:κMax) # radial wavenumber
+    κ1D = Float64.(collect(0:κMax)) # radial wavenumber
     # Get location of interface
     i = argmin(abs.(x .- x0))
     # Get fluctuating velocity components
@@ -56,7 +56,7 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     E2Dy = vHat .* conj(vHat)
     E2Dz = wHat .* conj(wHat)
     # Calculate energy spectra
-    constant = Δy * Δz * min(Δκy, Δκz) / (8.0 * pi^2 * grid.Ny * grid.Nz)
+    constant = Δy * Δz * min(Δκy, Δκz) / (8.0 * π^2 * grid.Ny * grid.Nz)
     for n in eachindex(κz)
         for m in eachindex(κy)
             κ = sqrt(κy[m]^2 + κz[n]^2)
@@ -76,16 +76,18 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
 end
 
 # Function to calculate integral length
-function calcIntegralLength(κ::Array{Int64, 1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid)
+function calcIntegralLength(κ::Array{Float64, 1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid)
     # Calculate spacing in κ
     Ly = grid.yR - grid.yL
     Lz = grid.zR - grid.zL
-    Δκy = 2.0 * pi / Ly
-    Δκz = 2.0 * pi / Lz
+    Δκy = 2.0 * π / Ly
+    Δκz = 2.0 * π / Lz
     Δκ = max(Δκy, Δκz)
-    # Calculate integral length in y and z directions
-    Ly = (3.0 * pi / 4) * integrate(Ey[2:end] ./ κ[2:end], Δκ) / integrate(Ey[2:end], Δκ)
-    Lz = (3.0 * pi / 4) * integrate(Ez[2:end] ./ κ[2:end], Δκ) / integrate(Ez[2:end], Δκ)
+    N = Int(max(grid.Ny/2, grid.Nz/2)) # Nyquist wavenumber
     # Calculate integral length in yz plane
-    return 0.5 * (Ly + Lz)
+    Eyz = Ey .+ Ez
+    Lyz = (3.0 * π / 4) * integrateEonK(Eyz, κ, Δκ, N) / integrate(Eyz, Δκ, N)
+
+    return Lyz
+
 end
