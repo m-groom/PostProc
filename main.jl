@@ -24,26 +24,29 @@ timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
 x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
 
-# TODO: wrap this in a loop to read all time steps
-t = 0.5
-timeStep = rpad(string(round(t, digits=8)), 10, "0")
-# Load solution
-Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars, dataDir)
+# Loop over all time steps
+for n = 1:input.nFiles
+    # Get time step
+    global t = input.startTime + (n - 1) * input.Δt
+    global timeStep = rpad(string(round(t, digits=8)), 10, "0")
+    # Load solution
+    Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars, dataDir)
 
-# Write out full solution
-writeSolution(t, x, y, z, Q, input.nVars, dataDir)
+    # Write out full solution
+    writeSolution(t, x, y, z, Q, input.nVars, dataDir)
 
-# Write out slice
-writeSlice(t, x, y, z, Q, input.nVars, "xy", x0, dataDir)
+    # Write out slice
+    writeSlice(t, x, y, z, Q, input.nVars, "xy", x0, dataDir)
 
-# Calculate plane averages
-QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
+    # Calculate plane averages
+    QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
 
-# Write plane averages
-writePlaneAverages(t, QBar, dataDir)
+    # Write plane averages
+    writePlaneAverages(t, QBar, dataDir)
 
-# Calculate integral quantities
-calcIntegralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
+    # Calculate integral quantities
+    calcIntegralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
 
-# Calculate spectral quantities
-calcSpectralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
+    # Calculate spectral quantities
+    calcSpectralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
+end

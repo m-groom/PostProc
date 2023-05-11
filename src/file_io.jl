@@ -25,6 +25,8 @@ function readSettings(filename::String)
     report("Reading settings from file $filename")
     # Open file
     file = open(filename, "r")
+    # Read data directory
+    dataDir = String(strip(split(readline(file), "#")[1]))
     # Read grid settings
     Nx = parse(Int64, split(readline(file), "#")[1])
     Ny = parse(Int64, split(readline(file), "#")[1])
@@ -48,8 +50,6 @@ function readSettings(filename::String)
         W[1] = parse(Float64, split(readline(file), "#")[1])
         W[2] = parse(Float64, split(readline(file), "#")[1])
     end
-    # Read data directory
-    dataDir = String(strip(split(readline(file), "#")[1]))
     # Close file
     close(file)
     # Package grid settings into a struct
@@ -126,7 +126,7 @@ function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Arr
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write slice to a .vtr file
-        filename = "$(dataDir)/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"     
+        filename = "$(dataDir)/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
         WriteVTK.vtk_grid(filename, x1, x2) do vtk
             vtk["MomentumX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
             vtk["MomentumY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
@@ -394,7 +394,7 @@ function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{
 end
 
 # Function to write integral width to a space delimited text file
-function writeIntegralWidth(t::Float64, W::Float64,H::Float64, dataDir::String)
+function writeIntegralWidth(t::Float64, W::Float64, H::Float64, dataDir::String)
     # Get filename
     filename = "$(dataDir)/integralWidth.dat"
     report("Writing integral and product widths to file $filename")
@@ -411,7 +411,7 @@ function writeIntegralWidth(t::Float64, W::Float64,H::Float64, dataDir::String)
 end
 
 # Function to write energy spectra to a space delimited text file
-function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1}, grid::rectilinearGrid, num::Array{Int64, 1}, dataDir::String)
+function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid, num::Array{Int64,1}, dataDir::String)
     # Calculate denoising term
     Δκy = 2.0 * π / (grid.yR - grid.yL)
     Δκz = 2.0 * π / (grid.zR - grid.zL)
@@ -422,7 +422,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64
     Ey = Ey .* denoise
     Ez = Ez .* denoise
     # Calculate Nyquist wavenumber
-    N = Int(max(grid.Ny/2, grid.Nz/2))
+    N = Int(max(grid.Ny / 2, grid.Nz / 2))
     # Make file name
     filename = "$(dataDir)/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing energy spectra to file $filename")

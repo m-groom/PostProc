@@ -28,7 +28,7 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     Δy = Ly / grid.Ny
     Δz = Lz / grid.Nz
     # Calculatate maximum radial wavenumber
-    κMax = Int(ceil(sqrt(2)*max(grid.Ny/2, grid.Nz/2)))
+    κMax = Int(ceil(sqrt(2) * max(grid.Ny / 2, grid.Nz / 2)))
     # Initialise arrays
     uPrime = zeros(Float64, grid.Ny, grid.Nz) # u'
     vPrime = zeros(Float64, grid.Ny, grid.Nz) # v'
@@ -62,8 +62,8 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
         for m in eachindex(κy)
             κ = sqrt(κy[m]^2 + κz[n]^2)
             for p = 0:κMax
-                κp = p * Δκ        
-                if (κp - Δκ/2 <= κ && κ < κp + Δκ/2)
+                κp = p * Δκ
+                if (κp - Δκ / 2 <= κ && κ < κp + Δκ / 2)
                     E1Dx[p+1] = E1Dx[p+1] + E2Dx[m, n] * constant
                     E1Dy[p+1] = E1Dy[p+1] + E2Dy[m, n] * constant
                     E1Dz[p+1] = E1Dz[p+1] + E2Dz[m, n] * constant
@@ -78,14 +78,14 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
 end
 
 # Function to calculate integral length
-function calcIntegralLength(κ::Array{Float64, 1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid)
+function calcIntegralLength(κ::Array{Float64,1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid)
     # Calculate spacing in κ
     Ly = grid.yR - grid.yL
     Lz = grid.zR - grid.zL
     Δκy = 2.0 * π / Ly
     Δκz = 2.0 * π / Lz
     Δκ = max(Δκy, Δκz)
-    N = Int(max(grid.Ny/2, grid.Nz/2)) # Nyquist wavenumber
+    N = Int(max(grid.Ny / 2, grid.Nz / 2)) # Nyquist wavenumber
     # Calculate integral length in yz plane
     Eyz = Ey .+ Ez
     Lyz = (3.0 * π / 4) * integrateEonK(Eyz, κ, Δκ, N) / integrate(Eyz, Δκ, N)

@@ -58,9 +58,9 @@ end
 # Function to calculate volume fraction from mass fraction (note: assumes species 1)
 function volumeFraction(Y1::Float64, R::Array{Float64,1})
     # Calculate denominator
-    sumRY = R[1]*Y1 + R[2]*(1.0 - Y1)
+    sumRY = R[1] * Y1 + R[2] * (1.0 - Y1)
     # Calculate volume fraction
-    Z1 = R[1]*Y1 / sumRY
+    Z1 = R[1] * Y1 / sumRY
     return Z1
 end
 

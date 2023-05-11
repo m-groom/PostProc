@@ -17,7 +17,7 @@ end
 struct inputSettings
     nVars::Int
     startTime::Float64
-    ΔT::Float64
+    Δt::Float64
     nFiles::Int
 end
 
