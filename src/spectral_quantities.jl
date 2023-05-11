@@ -4,11 +4,11 @@
 function calcSpectralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
     # Calcualte radial power spectra
     tStart = report("Calculating radial power spectra", 1)
-    Ex, Ey, Ez, κ = calcPowerSpectra(t, x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
+    Ex, Ey, Ez, κ, num = calcPowerSpectra(t, x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Write energy spectra to file
-    writeEnergySpectra(t, κ, Ex, Ey, Ez) # TODO: add noise compensation factor when writing spectra
+    writeEnergySpectra(t, κ, Ex, Ey, Ez, grid, num)
     # Calculate integral length
     Lyz = calcIntegralLength(κ, Ey, Ez, grid)
     # Write integral length to file
@@ -57,6 +57,7 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     E2Dz = wHat .* conj(wHat)
     # Calculate energy spectra
     constant = Δy * Δz * min(Δκy, Δκz) / (8.0 * π^2 * grid.Ny * grid.Nz)
+    num = zeros(Int, κMax + 1)
     for n in eachindex(κz)
         for m in eachindex(κy)
             κ = sqrt(κy[m]^2 + κz[n]^2)
@@ -66,12 +67,13 @@ function calcPowerSpectra(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
                     E1Dx[p+1] = E1Dx[p+1] + E2Dx[m, n] * constant
                     E1Dy[p+1] = E1Dy[p+1] + E2Dy[m, n] * constant
                     E1Dz[p+1] = E1Dz[p+1] + E2Dz[m, n] * constant
+                    num[p+1] = num[p+1] + 1
                 end
             end
         end
     end
 
-    return E1Dx, E1Dy, E1Dz, κ1D
+    return E1Dx, E1Dy, E1Dz, κ1D, num
 
 end
 

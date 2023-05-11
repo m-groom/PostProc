@@ -409,7 +409,18 @@ function writeIntegralWidth(t::Float64, W::Float64,H::Float64)
 end
 
 # Function to write energy spectra to a space delimited text file
-function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1})
+function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1}, grid::rectilinearGrid, num::Array{Int64, 1})
+    # Calculate denoising term
+    Δκy = 2.0 * π / (grid.yR - grid.yL)
+    Δκz = 2.0 * π / (grid.zR - grid.zL)
+    Δκ = min(Δκy, Δκz)
+    denoise = 2.0 * π * κ ./ (Δκ * num)
+    # Denoise spectra
+    Ex = Ex .* denoise
+    Ey = Ey .* denoise
+    Ez = Ez .* denoise
+    # Calculate Nyquist wavenumber
+    N = Int(max(grid.Ny/2, grid.Nz/2))
     # Make file name
     filename = "data/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing energy spectra to file $filename")
@@ -418,7 +429,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64
     # Write header
     write(f, "# kappa   Ex   Ey   Ez\n")
     # Write data in scientific format with 15 digits
-    for i = 1:length(κ)
+    for i = 1:N+1
         write(f, "$(@sprintf("%.15e", κ[i]))   $(@sprintf("%.15e", Ex[i]))   $(@sprintf("%.15e", Ey[i]))   $(@sprintf("%.15e", Ez[i]))\n")
     end
     # Close file
