@@ -16,6 +16,8 @@ include("src/tools_integral.jl")
 include("src/spectral_quantities.jl")
 include("src/tools_spectral.jl")
 
+# Reporting
+t1 = report("Starting post-processing", 1)
 # Read parameter file
 grid, input, thermo, x0, dataDir = readSettings("post.par")
 # Get first time step
@@ -50,3 +52,7 @@ for n = 1:input.nFiles
     # Calculate spectral quantities
     calcSpectralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
 end
+
+# Reporting
+t2 = report("Finished post-processing...", 1)
+report("Total time: $(t2 - t1)")
