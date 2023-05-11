@@ -1,18 +1,18 @@
 # Functions for calculating and manipulating spectral quantities
 
 # Top level function to calculate spectral quantities
-function calcSpectralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
+function calcSpectralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
     # Calcualte radial power spectra
     tStart = report("Calculating radial power spectra", 1)
     Ex, Ey, Ez, κ, num = calcPowerSpectra(t, x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Write energy spectra to file
-    writeEnergySpectra(t, κ, Ex, Ey, Ez, grid, num)
+    writeEnergySpectra(t, κ, Ex, Ey, Ez, grid, num, dataDir)
     # Calculate integral length
     Lyz = calcIntegralLength(κ, Ey, Ez, grid)
     # Write integral length to file
-    writeIntegralLength(t, Lyz)
+    writeIntegralLength(t, Lyz, dataDir)
 end
 
 # Function to calculate radial power spectra at x = x0 for each velocity component

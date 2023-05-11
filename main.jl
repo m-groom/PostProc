@@ -17,33 +17,33 @@ include("src/spectral_quantities.jl")
 include("src/tools_spectral.jl")
 
 # Read parameter file
-grid, input, thermo, x0 = readSettings("post.par")
+grid, input, thermo, x0, dataDir = readSettings("post.par")
 # Get first time step
 t = input.startTime
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
-x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz)
+x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
 
 # TODO: wrap this in a loop to read all time steps
 t = 0.5
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load solution
-Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars)
+Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars, dataDir)
 
 # Write out full solution
-writeSolution(t, x, y, z, Q, input.nVars)
+writeSolution(t, x, y, z, Q, input.nVars, dataDir)
 
 # Write out slice
-writeSlice(t, x, y, z, Q, input.nVars, "xy", x0)
+writeSlice(t, x, y, z, Q, input.nVars, "xy", x0, dataDir)
 
 # Calculate plane averages
 QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
 
 # Write plane averages
-writePlaneAverages(t, QBar)
+writePlaneAverages(t, QBar, dataDir)
 
 # Calculate integral quantities
-calcIntegralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0)
+calcIntegralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
 
 # Calculate spectral quantities
-calcSpectralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0)
+calcSpectralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)

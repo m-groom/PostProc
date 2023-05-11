@@ -48,6 +48,8 @@ function readSettings(filename::String)
         W[1] = parse(Float64, split(readline(file), "#")[1])
         W[2] = parse(Float64, split(readline(file), "#")[1])
     end
+    # Read data directory
+    dataDir = String(strip(split(readline(file), "#")[1]))
     # Close file
     close(file)
     # Package grid settings into a struct
@@ -57,17 +59,17 @@ function readSettings(filename::String)
     # Package thermodynamic properties into a struct
     thermo = thermodynamicProperties(μ, W)
 
-    return grid, input, thermo, x0
+    return grid, input, thermo, x0, dataDir
 
 end
 
 # Function for writing the solution to a .vtr file
-function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64)
+function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, dataDir::String)
     tStart = report("Writing the solution at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write solution to a .vtr file
-        filename = "data/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
+        filename = "$(dataDir)/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
         WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
             vtk["MomentumX", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 1]
             vtk["MomentumY", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 2]
@@ -96,7 +98,7 @@ function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::
 end
 
 # Function for writing out a slice to a .vtr file
-function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, slice::String, x0::Float64)
+function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, slice::String, x0::Float64, dataDir::String)
     # Calculate y0 and z0
     y0 = (y[1, end, 1] + y[1, 1, 1]) * 0.5
     z0 = (z[1, 1, end] + z[1, 1, 1]) * 0.5
@@ -124,7 +126,7 @@ function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Arr
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write slice to a .vtr file
-        filename = "data/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"     
+        filename = "$(dataDir)/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"     
         WriteVTK.vtk_grid(filename, x1, x2) do vtk
             vtk["MomentumX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
             vtk["MomentumY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
@@ -153,25 +155,25 @@ function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Arr
 end
 
 # Function for reading a Plot3D grid file
-function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
+function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, dataDir::String)
     # Read prempi.dat file
-    report("Reading file data/prempi.dat")
-    NPR, extents = readPrempi("data/prempi.dat")
+    report("Reading file $(dataDir)/prempi.dat")
+    NPR, extents = readPrempi("$(dataDir)/prempi.dat")
     # Allocate arrays
     iNX = Int32(extents[1, 2, end] - 2) # Number of points in x-direction
     iNY = Int32(extents[2, 2, end] - 2) # Number of points in y-direction
     iNZ = Int32(extents[3, 2, end] - 2) # Number of points in z-direction
     # Check that the grid sizes match
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
-        error("Grid sizes from data/prempi.dat do not match those in post.par")
+        error("Grid sizes from $(dataDir)/prempi.dat do not match those in post.par")
     end
     data = Float32.(zeros(iNX, iNY, iNZ, 3))
     # Read grid file
-    tStart = report("Reading grid files for $(NPR) processors located in data/out_$(timeStep)", 1)
+    tStart = report("Reading grid files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
     for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
-        filename = "data/out_$(timeStep)/$(timeStep).$(proc).g"
+        filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).g"
         # Get extents for this processor
         iStart = Int32(extents[1, 1, n])
         iEnd = Int32(extents[1, 2, n] - 2)
@@ -186,7 +188,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
         ie, je, ke = read(f, (Int32, 3))
         # Check that ie, je, ke match
         if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
-            error("Grid sizes from $(filename) do not match those in data/prempi.dat")
+            error("Grid sizes from $(filename) do not match those in $(dataDir)/prempi.dat")
         end
         data[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, 3)))
         # Close file
@@ -200,25 +202,25 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64)
 end
 
 # Function for reading a Plot3D solution file
-function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64)
+function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64, dataDir::String)
     # Read prempi.dat file
-    report("Reading grid partition data from file data/prempi.dat")
-    NPR, extents = readPrempi("data/prempi.dat")
+    report("Reading grid partition data from file $(dataDir)/prempi.dat")
+    NPR, extents = readPrempi("$(dataDir)/prempi.dat")
     # Allocate arrays
     iNX = Int32(extents[1, 2, end] - 2) # Number of points in x-direction
     iNY = Int32(extents[2, 2, end] - 2) # Number of points in y-direction
     iNZ = Int32(extents[3, 2, end] - 2) # Number of points in z-direction
     # Check that the grid sizes match
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
-        error("Grid sizes from data/prempi.dat do not match those in post.par")
+        error("Grid sizes from $(dataDir)/prempi.dat do not match those in post.par")
     end
     Q = Float32.(zeros(iNX, iNY, iNZ, nVars))
     # Read solution file
-    tStart = report("Reading solution files for $(NPR) processors located in data/out_$(timeStep)", 1)
+    tStart = report("Reading solution files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
     for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
-        filename = "data/out_$(timeStep)/$(timeStep).$(proc).all.f"
+        filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).all.f"
         # Get extents for this processor
         iStart = Int32(extents[1, 1, n])
         iEnd = Int32(extents[1, 2, n] - 2)
@@ -233,7 +235,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
         ie, je, ke = read(f, (Int32, 3))
         # Check that ie, je, ke match
         if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
-            error("Grid sizes from $(filename) do not match those in data/prempi.dat")
+            error("Grid sizes from $(filename) do not match those in $(dataDir)/prempi.dat")
         end
         Q[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, nVars)))
         # Close file
@@ -271,9 +273,9 @@ function readPrempi(filename::String)
 end
 
 # Function to write out plane averages to a space delimited text file
-function writePlaneAverages(t::Float64, QBar::planeAverage)
+function writePlaneAverages(t::Float64, QBar::planeAverage, dataDir::String)
     # Make file name
-    filename = "data/planeAverages_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    filename = "$(dataDir)/planeAverages_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     tStart = report("Writing plane averages to file $filename", 1)
     # Open file
     f = open(filename, "w")
@@ -290,9 +292,9 @@ function writePlaneAverages(t::Float64, QBar::planeAverage)
 end
 
 # Function to write correlation lengths to file
-function writeCorrelationLengths(t::Float64, Λx::Float64, Λyz::Float64)
+function writeCorrelationLengths(t::Float64, Λx::Float64, Λyz::Float64, dataDir::String)
     # Get filename
-    filename = "data/correlationLengths.dat"
+    filename = "$(dataDir)/correlationLengths.dat"
     report("Writing correlation lengths to file $filename")
     # Append to file
     f = open(filename, "a")
@@ -307,9 +309,9 @@ function writeCorrelationLengths(t::Float64, Λx::Float64, Λyz::Float64)
 end
 
 # Function to write length scales to a space delimited text file
-function writeLengthScales(t::Float64, λx::Float64, λyz::Float64, ηx::Float64, ηyz::Float64)
+function writeLengthScales(t::Float64, λx::Float64, λyz::Float64, ηx::Float64, ηyz::Float64, dataDir::String)
     # Get filename
-    filename = "data/lengthScales.dat"
+    filename = "$(dataDir)/lengthScales.dat"
     report("Writing length scales to file $filename")
     # Append to file
     f = open(filename, "a")
@@ -324,9 +326,9 @@ function writeLengthScales(t::Float64, λx::Float64, λyz::Float64, ηx::Float64
 end
 
 # Function to write out Reynolds stresses to a space delimited text file
-function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1})
+function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, dataDir::String)
     # Make file name
-    filename = "data/reynoldsStresses_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    filename = "$(dataDir)/reynoldsStresses_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Reynolds stresses to file $filename")
     # Open file
     f = open(filename, "w")
@@ -341,9 +343,9 @@ function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float
 end
 
 # Function to write out dissipation rates to a space delimited text file
-function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1})
+function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, dataDir::String)
     # Make file name
-    filename = "data/dissipationRates_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    filename = "$(dataDir)/dissipationRates_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing dissipation rates to file $filename")
     # Open file
     f = open(filename, "w")
@@ -358,9 +360,9 @@ function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float
 end
 
 # Function to write out Taylor microscales to a space delimited text file
-function writeTaylorMicroscales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1})
+function writeTaylorMicroscales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, dataDir::String)
     # Make file name
-    filename = "data/taylor_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    filename = "$(dataDir)/taylor_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Taylor microscales to file $filename")
     # Open file
     f = open(filename, "w")
@@ -375,9 +377,9 @@ function writeTaylorMicroscales(t::Float64, x::Array{Float32,1}, λx::Array{Floa
 end
 
 # Function to write out Kolmogorov microscales to a space delimited text file
-function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1})
+function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, dataDir::String)
     # Make file name
-    filename = "data/kolmogorov_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    filename = "$(dataDir)/kolmogorov_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Kolmogorov microscales to file $filename")
     # Open file
     f = open(filename, "w")
@@ -392,9 +394,9 @@ function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{
 end
 
 # Function to write integral width to a space delimited text file
-function writeIntegralWidth(t::Float64, W::Float64,H::Float64)
+function writeIntegralWidth(t::Float64, W::Float64,H::Float64, dataDir::String)
     # Get filename
-    filename = "data/integralWidth.dat"
+    filename = "$(dataDir)/integralWidth.dat"
     report("Writing integral and product widths to file $filename")
     # Append to file
     f = open(filename, "a")
@@ -409,7 +411,7 @@ function writeIntegralWidth(t::Float64, W::Float64,H::Float64)
 end
 
 # Function to write energy spectra to a space delimited text file
-function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1}, grid::rectilinearGrid, num::Array{Int64, 1})
+function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64, 1}, Ey::Array{Float64, 1}, Ez::Array{Float64, 1}, grid::rectilinearGrid, num::Array{Int64, 1}, dataDir::String)
     # Calculate denoising term
     Δκy = 2.0 * π / (grid.yR - grid.yL)
     Δκz = 2.0 * π / (grid.zR - grid.zL)
@@ -422,7 +424,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64
     # Calculate Nyquist wavenumber
     N = Int(max(grid.Ny/2, grid.Nz/2))
     # Make file name
-    filename = "data/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    filename = "$(dataDir)/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing energy spectra to file $filename")
     # Open file
     f = open(filename, "w")
@@ -437,9 +439,9 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64, 1}, Ex::Array{Float64
 end
 
 # Function to write integral length to a space delimited text file
-function writeIntegralLength(t::Float64, Lyz::Float64)
+function writeIntegralLength(t::Float64, Lyz::Float64, dataDir::String)
     # Get filename
-    filename = "data/integralLength.dat"
+    filename = "$(dataDir)/integralLength.dat"
     report("Writing integral length to file $filename")
     # Append to file
     f = open(filename, "a")

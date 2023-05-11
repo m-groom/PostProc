@@ -65,7 +65,7 @@ function volumeFraction(Y1::Float64, R::Array{Float64,1})
 end
 
 # Function to calculate the integral width
-function calcIntegralWidth(t::Float64, QBar::planeAverage)
+function calcIntegralWidth(t::Float64, QBar::planeAverage, dataDir::String)
     # Extract plane averages
     x = QBar.x
     Z1 = QBar.Z1Bar
@@ -75,7 +75,7 @@ function calcIntegralWidth(t::Float64, QBar::planeAverage)
     # Calculate product width
     H = 2.0 * midpoint(x, min.(Z1, Z2))
     # Write W and H to file
-    writeIntegralWidth(t, W, H)
+    writeIntegralWidth(t, W, H, dataDir)
 
     return W, H
 

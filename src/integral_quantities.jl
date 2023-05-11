@@ -1,7 +1,7 @@
 # Functions for calculating and manipulating integral quantities
 
 # Top level function to calculate integral quantities
-function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
+function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
     R11, R22, R33 = calcVelocityCorrelation(x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
@@ -13,17 +13,17 @@ function calcIntegralQuantities(t::Float64, x::Array{Float32,3}, y::Array{Float3
     tEnd = report("Finished calculating correlation lengths...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Write correlation lengths to file
-    writeCorrelationLengths(t, Λx, Λyz)
+    writeCorrelationLengths(t, Λx, Λyz, dataDir)
     # Calculate directional length scales
     tStart = report("Calculating directional length scales", 1)
-    λx, λyz, ηx, ηyz = calcLengthScales(t, x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0)
+    λx, λyz, ηx, ηyz = calcLengthScales(t, x[:, 1, 1], y[1, :, 1], z[1, 1, :], Q, QBar, grid, nVars, x0, dataDir)
     tEnd = report("Finished calculating directional length scales...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Write directional length scales to file
-    writeLengthScales(t, λx, λyz, ηx, ηyz)
+    writeLengthScales(t, λx, λyz, ηx, ηyz, dataDir)
     # Calculate integral width
     tStart = report("Calculating integral width", 1)
-    W, H = calcIntegralWidth(t, QBar)
+    W, H = calcIntegralWidth(t, QBar, dataDir)
     tEnd = report("Finished calculating integral width...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
@@ -163,7 +163,7 @@ function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R3
 end
 
 # Function to calculate Taylor and Kolmorogov microscales
-function calcLengthScales(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
+function calcLengthScales(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, z::Array{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
     # Initialise arrays
     R11 = zeros(Float64, grid.Nx) # <u'u'>
     R22 = zeros(Float64, grid.Nx) # <v'v'>
@@ -238,13 +238,13 @@ function calcLengthScales(t::Float64, x::Array{Float32,1}, y::Array{Float32,1}, 
     ηz = (QBar.nuBar .^ 3 ./ εz) .^ 0.25
     ηyz = 0.5 * (ηy + ηz)
     # Write Reynolds stresses to file
-    writeReynoldsStresses(t, x, R11, R22, R33)
+    writeReynoldsStresses(t, x, R11, R22, R33, dataDir)
     # Write dissipation rates to file
-    writeDissipationRates(t, x, εx, εy, εz)
+    writeDissipationRates(t, x, εx, εy, εz, dataDir)
     # Write Taylor microscales to file
-    writeTaylorMicroscales(t, x, λx, λy, λz)
+    writeTaylorMicroscales(t, x, λx, λy, λz, dataDir)
     # Write Kolmogorov microscales to file
-    writeKolmogorovMicroscales(t, x, ηx, ηy, ηz)
+    writeKolmogorovMicroscales(t, x, ηx, ηy, ηz, dataDir)
     # Get location of interface
     i0 = argmin(abs.(x .- x0))
 
