@@ -1,7 +1,6 @@
 # PostProc: Post processing routines for CFD simulations on rectilinear grids
 
 # Load modules
-import PyPlot as plt
 import FortranFiles as FFile
 import Dates
 import WriteVTK
