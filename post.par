@@ -1,4 +1,4 @@
-/home/michael/Code/PostProc/data # Data directory (String)
+/mnt/data/FLAMENCO/run/theta-group/DNS/128 # Data directory (String)
 336                 # Nx: number of cells in the x direction (Int64)
 128                 # Ny: number of cells in the y direction (Int64)
 128                 # Nz: number of cells in the z direction (Int64)
