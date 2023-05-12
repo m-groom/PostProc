@@ -6,6 +6,7 @@ import Dates
 import WriteVTK
 import FFTW
 using Printf
+using Base.Threads: @threads
 # Load functions
 include("src/structs.jl")
 include("src/file_io.jl")
