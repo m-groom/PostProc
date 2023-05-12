@@ -16,14 +16,14 @@ include("src/spectral_quantities.jl")
 include("src/tools_spectral.jl")
 
 # Reporting
-t1 = report("Starting post-processing", 1)
+const t1 = report("Starting post-processing", 1)
 # Read parameter file
-grid, input, thermo, x0, dataDir = readSettings("post.par")
+const grid, input, thermo, x0, dataDir = readSettings("post.par")
 # Get first time step
-t = 0.0
-timeStep = rpad(string(round(t, digits=8)), 10, "0")
+t::Float64 = 0.0
+timeStep::String = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
-x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
+const x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
 
 # Loop over all time steps
 for n = 1:input.nFiles
@@ -40,18 +40,18 @@ for n = 1:input.nFiles
     writeSlice(t, x, y, z, Q, input.nVars, "xy", x0, dataDir)
 
     # Calculate plane averages
-    QBar = getPlaneAverages(x, Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
+    QBar = getPlaneAverages(@view(x[:, 1, 1]), Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
 
     # Write plane averages
     writePlaneAverages(t, QBar, dataDir)
 
     # Calculate integral quantities
-    calcIntegralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
+    calcIntegralQuantities(t, @view(x[:, 1, 1]), @view(y[1, :, 1]), @view(z[1, 1, :]), Q, QBar, grid, input.nVars, x0, dataDir)
 
     # Calculate spectral quantities
-    calcSpectralQuantities(t, x, y, z, Q, QBar, grid, input.nVars, x0, dataDir)
+    calcSpectralQuantities(t, @view(x[:, 1, 1]), Q, QBar, grid, input.nVars, x0, dataDir)
 end
 
 # Reporting
-t2 = report("Finished post-processing...", 1)
+const t2 = report("Finished post-processing...", 1)
 report("Total time: $(t2 - t1)")

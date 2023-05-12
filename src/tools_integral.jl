@@ -1,7 +1,7 @@
 # Tools for use in functions from integral_quantities.jl
 
 # Trapezoidal rule integration (x is a vector of nodes, y is a vector of values at nodes)
-function trapz(x::Array{Float64,1}, y::Array{Float64,1})
+function trapz(x::SubArray{Float64,1}, y::SubArray{Float64,1})
     return sum(0.5 .* (x[2:end] .- x[1:end-1]) .* (y[2:end] .+ y[1:end-1]))
 end
 
@@ -11,7 +11,7 @@ function midpoint(x::Array{Float64,1}, y::Array{Float64,1})
 end
 
 # Function to compute a first order derivative in the non-homogeneous direction
-function dUdX(x::Array{Float32,1}, U::Array{Float32,1}, i::Int64)
+function dUdX(x::SubArray{Float32,1}, U::SubArray{Float32,1}, i::Int64)
     # Get number of cells
     N = length(x) - 1
     # Check if we are at the first or last cell
@@ -25,7 +25,7 @@ function dUdX(x::Array{Float32,1}, U::Array{Float32,1}, i::Int64)
 end
 
 # Function to compute a first order derivative in the homogeneous direction
-function dUdY(y::Array{Float32,1}, U::Array{Float32,1}, j::Int64)
+function dUdY(y::SubArray{Float32,1}, U::SubArray{Float32,1}, j::Int64)
     # Get number of cells
     N = length(y) - 1
     # Check if we are at the first or last cell

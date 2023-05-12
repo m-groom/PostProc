@@ -64,31 +64,31 @@ function readSettings(filename::String)
 end
 
 # Function for writing the solution to a .vtr file
-function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, dataDir::String)
+function writeSolution(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, z::SubArray{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, dataDir::String)
     tStart = report("Writing the solution at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write solution to a .vtr file
         filename = "$(dataDir)/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
-        WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
-            vtk["MomentumX", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 1]
-            vtk["MomentumY", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 2]
-            vtk["MomentumZ", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 3]
-            vtk["EnergyDensity", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 4]
+        @inbounds WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
+            vtk["MomentumX", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 1])
+            vtk["MomentumY", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 2])
+            vtk["MomentumZ", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 3])
+            vtk["EnergyDensity", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 4])
             if (iNVars >= 10)
-                for v = 1:2
-                    vtk["DensityMassFraction$(v)", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 4+v]
+                @inbounds for v = 1:2
+                    vtk["DensityMassFraction$(v)", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 4+v])
                 end
             end
             if (iNVars == 12)
-                for v = 1:2
-                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, 4+2+v]
+                @inbounds for v = 1:2
+                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 6+v])
                 end
             end
-            vtk["Density", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars-3]
-            vtk["Gamma", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars-2]
-            vtk["Pressure", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars-1]
-            vtk["Temperature", WriteVTK.VTKCellData()] = Q[1:end-1, 1:end-1, 1:end-1, iNVars]
+            vtk["Density", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-3])
+            vtk["Gamma", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-2])
+            vtk["Pressure", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-1])
+            vtk["Temperature", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars])
         end
     else
         error("Number of variables must be 8, 10 or 12")
@@ -98,25 +98,25 @@ function writeSolution(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::
 end
 
 # Function for writing out a slice to a .vtr file
-function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Array{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, slice::String, x0::Float64, dataDir::String)
+function writeSlice(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, z::SubArray{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, slice::String, x0::Float64, dataDir::String)
     # Calculate y0 and z0
     y0 = (y[1, end, 1] + y[1, 1, 1]) * 0.5
     z0 = (z[1, 1, end] + z[1, 1, 1]) * 0.5
     # Find index of x0, y0 and z0
-    iX0 = argmin(abs.(x[:, 1, 1] .- x0))
-    iY0 = argmin(abs.(y[1, :, 1] .- y0))
-    iZ0 = argmin(abs.(z[1, 1, :] .- z0))
+    iX0 = searchsortedfirst(x[:, 1, 1], x0) - 1
+    iY0 = searchsortedfirst(y[1, :, 1], y0)
+    iZ0 = searchsortedfirst(z[1, 1, :], z0)
     # Get slice from the solution Q
     if (slice == "xz" || slice == "zx")
-        Qs = Q[:, iY0, :, :]
+        Qs = @view(Q[:, iY0, :, :])
         x1 = x[:, iY0, 1]
         x2 = z[1, iY0, :]
     elseif (slice == "xy" || slice == "yx")
-        Qs = Q[:, :, iZ0, :]
+        Qs = @view(Q[:, :, iZ0, :])
         x1 = x[:, 1, iZ0]
         x2 = y[1, :, iZ0]
     elseif (slice == "yz" || slice == "zy")
-        Qs = Q[iX0, :, :, :]
+        Qs = @view(Q[iX0, :, :, :])
         x1 = y[iX0, :, 1]
         x2 = z[iX0, 1, :]
     else
@@ -127,19 +127,19 @@ function writeSlice(t::Float64, x::Array{Float32,3}, y::Array{Float32,3}, z::Arr
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write slice to a .vtr file
         filename = "$(dataDir)/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
-        WriteVTK.vtk_grid(filename, x1, x2) do vtk
+        @inbounds WriteVTK.vtk_grid(filename, x1, x2) do vtk
             vtk["MomentumX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
             vtk["MomentumY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
             vtk["MomentumZ", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 3]
             vtk["EnergyDensity", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4]
             if (iNVars >= 10)
-                for v = 1:2
+                @inbounds for v = 1:2
                     vtk["DensityMassFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4+v]
                 end
             end
             if (iNVars == 12)
-                for v = 1:2
-                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4+2+v]
+                @inbounds for v = 1:2
+                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 6+v]
                 end
             end
             vtk["Density", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-3]
@@ -167,10 +167,10 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, dataD
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
         error("Grid sizes from $(dataDir)/prempi.dat do not match those in post.par")
     end
-    data = Float32.(zeros(iNX, iNY, iNZ, 3))
+    data = zeros(Float32, iNX, iNY, iNZ, 3)
     # Read grid file
     tStart = report("Reading grid files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
-    for n = 1:NPR
+    @inbounds for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
         filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).g"
@@ -196,8 +196,12 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, dataD
     end
     tEnd = report("Finished reading grid files...", 1)
     report("Elapsed time: $(tEnd - tStart)")
+    # Extract x, y and z
+    x = @view(data[:, :, :, 1])
+    y = @view(data[:, :, :, 2])
+    z = @view(data[:, :, :, 3])
 
-    return data[:, :, :, 1], data[:, :, :, 2], data[:, :, :, 3]
+    return x, y, z
 
 end
 
@@ -214,10 +218,10 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
     if (iNX != Nx + 1) || (iNY != Ny + 1) || (iNZ != Nz + 1)
         error("Grid sizes from $(dataDir)/prempi.dat do not match those in post.par")
     end
-    Q = Float32.(zeros(iNX, iNY, iNZ, nVars))
+    Q = zeros(Float32, iNX, iNY, iNZ, nVars)
     # Read solution file
     tStart = report("Reading solution files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
-    for n = 1:NPR
+    @inbounds for n = 1:NPR
         # Generate filename
         proc = string(n - 1)
         filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).all.f"
@@ -255,7 +259,7 @@ function readPrempi(filename::String)
     # Read number of processors
     NPR = parse(Int, readline(file))
     extents = Int.(zeros(3, 2, NPR))
-    for n = 1:NPR
+    @inbounds for n = 1:NPR
         # Read processor number
         proc = parse(Int, readline(file))
         # Read k extents
@@ -282,7 +286,7 @@ function writePlaneAverages(t::Float64, QBar::planeAverage, dataDir::String)
     # Write header
     write(f, "# x   rhoBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
     # Write data in scientific format with 15 digits
-    for i = 1:length(QBar.x)-1
+    @inbounds for i = 1:length(QBar.x)-1
         write(f, "$(@sprintf("%.15e", QBar.x[i]))   $(@sprintf("%.15e", QBar.rhoBar[i]))   $(@sprintf("%.15e", QBar.UBar[i]))   $(@sprintf("%.15e", QBar.Y1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Z2Bar[i]))\n")
     end
     # Close file
@@ -326,7 +330,7 @@ function writeLengthScales(t::Float64, λx::Float64, λyz::Float64, ηx::Float64
 end
 
 # Function to write out Reynolds stresses to a space delimited text file
-function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, dataDir::String)
+function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, dataDir::String)
     # Make file name
     filename = "$(dataDir)/reynoldsStresses_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Reynolds stresses to file $filename")
@@ -335,7 +339,7 @@ function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float
     # Write header
     write(f, "# x   R11   R22   R33\n")
     # Write data in scientific format with 15 digits
-    for i = 1:length(x)-1
+    @inbounds for i = 1:length(x)-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", R11[i]))   $(@sprintf("%.15e", R22[i]))   $(@sprintf("%.15e", R33[i]))\n")
     end
     # Close file
@@ -343,7 +347,7 @@ function writeReynoldsStresses(t::Float64, x::Array{Float32,1}, R11::Array{Float
 end
 
 # Function to write out dissipation rates to a space delimited text file
-function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, dataDir::String)
+function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, dataDir::String)
     # Make file name
     filename = "$(dataDir)/dissipationRates_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing dissipation rates to file $filename")
@@ -352,7 +356,7 @@ function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float
     # Write header
     write(f, "# x   epsilonx   epsilony   epsilonz\n")
     # Write data in scientific format with 15 digits
-    for i = 1:length(x)-1
+    @inbounds for i = 1:length(x)-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", εx[i]))   $(@sprintf("%.15e", εy[i]))   $(@sprintf("%.15e", εz[i]))\n")
     end
     # Close file
@@ -360,7 +364,7 @@ function writeDissipationRates(t::Float64, x::Array{Float32,1}, εx::Array{Float
 end
 
 # Function to write out Taylor microscales to a space delimited text file
-function writeTaylorMicroscales(t::Float64, x::Array{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, dataDir::String)
+function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, dataDir::String)
     # Make file name
     filename = "$(dataDir)/taylor_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Taylor microscales to file $filename")
@@ -369,7 +373,7 @@ function writeTaylorMicroscales(t::Float64, x::Array{Float32,1}, λx::Array{Floa
     # Write header
     write(f, "# x   lambdax   lambday   lambday\n")
     # Write data in scientific format with 15 digits
-    for i = 1:length(x)-1
+    @inbounds for i = 1:length(x)-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", λx[i]))   $(@sprintf("%.15e", λy[i]))   $(@sprintf("%.15e", λz[i]))\n")
     end
     # Close file
@@ -377,7 +381,7 @@ function writeTaylorMicroscales(t::Float64, x::Array{Float32,1}, λx::Array{Floa
 end
 
 # Function to write out Kolmogorov microscales to a space delimited text file
-function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, dataDir::String)
+function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, dataDir::String)
     # Make file name
     filename = "$(dataDir)/kolmogorov_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Kolmogorov microscales to file $filename")
@@ -386,7 +390,7 @@ function writeKolmogorovMicroscales(t::Float64, x::Array{Float32,1}, ηx::Array{
     # Write header
     write(f, "# x   etax   etay   etaz\n")
     # Write data in scientific format with 15 digits
-    for i = 1:length(x)-1
+    @inbounds for i = 1:length(x)-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", ηx[i]))   $(@sprintf("%.15e", ηy[i]))   $(@sprintf("%.15e", ηz[i]))\n")
     end
     # Close file
@@ -416,7 +420,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
     Δκy = 2.0 * π / (grid.yR - grid.yL)
     Δκz = 2.0 * π / (grid.zR - grid.zL)
     Δκ = min(Δκy, Δκz)
-    denoise = 2.0 * π * κ ./ (Δκ * num)
+    denoise = 2.0 .* π .* κ ./ (Δκ * num)
     # Denoise spectra
     Ex = Ex .* denoise
     Ey = Ey .* denoise
@@ -431,7 +435,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
     # Write header
     write(f, "# kappa   Ex   Ey   Ez\n")
     # Write data in scientific format with 15 digits
-    for i = 1:N+1
+    @inbounds for i = 1:N+1
         write(f, "$(@sprintf("%.15e", κ[i]))   $(@sprintf("%.15e", Ex[i]))   $(@sprintf("%.15e", Ey[i]))   $(@sprintf("%.15e", Ez[i]))\n")
     end
     # Close file
