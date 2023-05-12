@@ -16,7 +16,7 @@ function integrateEonK(E::Array{Float64,1}, κ::Array{Float64,1}, Δκ::Float64,
         if (κ[i] == 0)
             integral += 0.5 * Δκ * (0.0 + E[i+1] / κ[i+1])
         else
-            integral += + 0.5 * Δκ * (E[i] / κ[i] + E[i+1] / κ[i+1])
+            integral += +0.5 * Δκ * (E[i] / κ[i] + E[i+1] / κ[i+1])
         end
     end
     return integral

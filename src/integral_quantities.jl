@@ -99,7 +99,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                 DbInv = 1.0 / Q[i, j, idx, nVars-3]
                 Wb = Q[i, j, idx, 3] * DbInv - QBar.WBar[i]
                 # Calculate velocity correlation tensor components in the z direction
-                R33[kk] +=  Wa * Wb
+                R33[kk] += Wa * Wb
             end
         end
     end
@@ -134,12 +134,36 @@ function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R3
     j0 = Int(ceil(length(ry) / 2))
     k0 = Int(ceil(length(rz) / 2))
     # Get location of first zero crossing
-    i2 = try i0 - 1 + findfirst(x -> x < 0.0, @view(R11[i0:end])) - 1 catch; length(R11) end
-    i1 = try findlast(x -> x < 0.0, @view(R11[1:i0])) + 1 catch; 1 end
-    j2 = try j0 - 1 + findfirst(x -> x < 0.0, @view(R22[j0:end])) - 1 catch; length(R22) end
-    j1 = try findlast(x -> x < 0.0, @view(R22[1:j0])) + 1 catch; 1 end
-    k2 = try k0 - 1 + findfirst(x -> x < 0.0, @view(R33[k0:end])) - 1 catch; length(R33) end
-    k1 = try findlast(x -> x < 0.0, @view(R33[1:k0])) + 1 catch; 1 end
+    i2 = try
+        i0 - 1 + findfirst(x -> x < 0.0, @view(R11[i0:end])) - 1
+    catch
+        length(R11)
+    end
+    i1 = try
+        findlast(x -> x < 0.0, @view(R11[1:i0])) + 1
+    catch
+        1
+    end
+    j2 = try
+        j0 - 1 + findfirst(x -> x < 0.0, @view(R22[j0:end])) - 1
+    catch
+        length(R22)
+    end
+    j1 = try
+        findlast(x -> x < 0.0, @view(R22[1:j0])) + 1
+    catch
+        1
+    end
+    k2 = try
+        k0 - 1 + findfirst(x -> x < 0.0, @view(R33[k0:end])) - 1
+    catch
+        length(R33)
+    end
+    k1 = try
+        findlast(x -> x < 0.0, @view(R33[1:k0])) + 1
+    catch
+        1
+    end
     # Calculate correlation lengths
     Λx = trapz(@view(rx[i1:i2]), @view(R11[i1:i2]))
     Λy = trapz(@view(ry[j1:j2]), @view(R22[j1:j2]))
