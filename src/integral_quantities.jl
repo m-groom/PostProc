@@ -200,7 +200,7 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
                 R33[i] += wPrime * wPrime
                 # Compute velocity derivatives
                 Uii = dUdX(x, @view(Q[:, j, k, 1]), i) # du/dx
-                Uji = dUdX(x, @view(Q[:, j, k, 2]), j) # dv/dx
+                Uji = dUdX(x, @view(Q[:, j, k, 2]), i) # dv/dx
                 Uki = dUdX(x, @view(Q[:, j, k, 3]), i) # dw/dx
                 Uij = dUdY(y, @view(Q[i, :, k, 1]), j) # du/dy
                 Ujj = dUdY(y, @view(Q[i, :, k, 2]), j) # dv/dy
