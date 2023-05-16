@@ -250,13 +250,13 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     ηz = (QBar.nuBar .^ 3 ./ εz) .^ 0.25
     ηyz = 0.5 .* (ηy .+ ηz)
     # Write Reynolds stresses to file
-    writeReynoldsStresses(t, x, R11, R22, R33, dataDir)
+    writeReynoldsStresses(t, x, R11, R22, R33, grid, dataDir)
     # Write dissipation rates to file
-    writeDissipationRates(t, x, εx, εy, εz, dataDir)
+    writeDissipationRates(t, x, εx, εy, εz, grid, dataDir)
     # Write Taylor microscales to file
-    writeTaylorMicroscales(t, x, λx, λy, λz, dataDir)
+    writeTaylorMicroscales(t, x, λx, λy, λz, grid, dataDir)
     # Write Kolmogorov microscales to file
-    writeKolmogorovMicroscales(t, x, ηx, ηy, ηz, dataDir)
+    writeKolmogorovMicroscales(t, x, ηx, ηy, ηz, grid, dataDir)
     # Get location of interface
     i0 = searchsortedfirst(x, x0) - 1
 

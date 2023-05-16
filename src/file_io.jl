@@ -277,7 +277,11 @@ function readPrempi(filename::String)
 end
 
 # Function to write out plane averages to a space delimited text file
-function writePlaneAverages(t::Float64, QBar::planeAverage, dataDir::String)
+function writePlaneAverages(t::Float64, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(QBar.x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(QBar.x, grid.xR)
     # Make file name
     filename = "$(dataDir)/planeAverages_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     tStart = report("Writing plane averages to file $filename", 1)
@@ -286,7 +290,7 @@ function writePlaneAverages(t::Float64, QBar::planeAverage, dataDir::String)
     # Write header
     write(f, "# x   rhoBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = 1:length(QBar.x)-1
+    @inbounds for i = iL:iR-1
         write(f, "$(@sprintf("%.15e", QBar.x[i]))   $(@sprintf("%.15e", QBar.rhoBar[i]))   $(@sprintf("%.15e", QBar.UBar[i]))   $(@sprintf("%.15e", QBar.Y1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Z2Bar[i]))\n")
     end
     # Close file
@@ -330,7 +334,11 @@ function writeLengthScales(t::Float64, λx::Float64, λyz::Float64, ηx::Float64
 end
 
 # Function to write out Reynolds stresses to a space delimited text file
-function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, dataDir::String)
+function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
     # Make file name
     filename = "$(dataDir)/reynoldsStresses_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Reynolds stresses to file $filename")
@@ -339,7 +347,7 @@ function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Fl
     # Write header
     write(f, "# x   R11   R22   R33\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = 1:length(x)-1
+    @inbounds for i = iL:iR-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", R11[i]))   $(@sprintf("%.15e", R22[i]))   $(@sprintf("%.15e", R33[i]))\n")
     end
     # Close file
@@ -347,7 +355,11 @@ function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Fl
 end
 
 # Function to write out dissipation rates to a space delimited text file
-function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, dataDir::String)
+function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
     # Make file name
     filename = "$(dataDir)/dissipationRates_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing dissipation rates to file $filename")
@@ -356,7 +368,7 @@ function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Fl
     # Write header
     write(f, "# x   epsilonx   epsilony   epsilonz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = 1:length(x)-1
+    @inbounds for i = iL:iR-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", εx[i]))   $(@sprintf("%.15e", εy[i]))   $(@sprintf("%.15e", εz[i]))\n")
     end
     # Close file
@@ -364,7 +376,11 @@ function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Fl
 end
 
 # Function to write out Taylor microscales to a space delimited text file
-function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, dataDir::String)
+function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
     # Make file name
     filename = "$(dataDir)/taylor_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Taylor microscales to file $filename")
@@ -373,7 +389,7 @@ function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{F
     # Write header
     write(f, "# x   lambdax   lambday   lambday\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = 1:length(x)-1
+    @inbounds for i = iL:iR-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", λx[i]))   $(@sprintf("%.15e", λy[i]))   $(@sprintf("%.15e", λz[i]))\n")
     end
     # Close file
@@ -381,7 +397,11 @@ function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{F
 end
 
 # Function to write out Kolmogorov microscales to a space delimited text file
-function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, dataDir::String)
+function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
     # Make file name
     filename = "$(dataDir)/kolmogorov_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing Kolmogorov microscales to file $filename")
@@ -390,7 +410,7 @@ function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Arr
     # Write header
     write(f, "# x   etax   etay   etaz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = 1:length(x)-1
+    @inbounds for i = iL:iR-1
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", ηx[i]))   $(@sprintf("%.15e", ηy[i]))   $(@sprintf("%.15e", ηz[i]))\n")
     end
     # Close file

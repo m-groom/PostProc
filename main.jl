@@ -43,7 +43,7 @@ for n = 1:input.nFiles
     QBar = getPlaneAverages(@view(x[:, 1, 1]), Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
 
     # Write plane averages
-    writePlaneAverages(t, QBar, dataDir)
+    writePlaneAverages(t, QBar, grid, dataDir)
 
     # Calculate integral quantities
     calcIntegralQuantities(t, @view(x[:, 1, 1]), @view(y[1, :, 1]), @view(z[1, 1, :]), Q, QBar, grid, input.nVars, x0, dataDir)
