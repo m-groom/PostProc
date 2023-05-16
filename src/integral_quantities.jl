@@ -258,7 +258,7 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     # Write Kolmogorov microscales to file
     writeKolmogorovMicroscales(t, x, ηx, ηy, ηz, dataDir)
     # Get location of interface
-    i0 = argmin(abs.(x .- x0))
+    i0 = searchsortedfirst(x, x0) - 1
 
     return λx[i0], λyz[i0], ηx[i0], ηyz[i0]
 
