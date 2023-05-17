@@ -84,7 +84,7 @@ function convertSolution!(Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, 
 end
 
 # Function to calculate volume fraction from mass fraction (note: assumes species 1)
-function volumeFraction(Y1::Float64, R::Array{Float64,1})
+function volumeFraction(Y1::Float32, R::Array{Float64,1})
     # Calculate denominator
     sumRY = R[1] * Y1 + R[2] * (1.0 - Y1)
     # Calculate volume fraction
