@@ -1,11 +1,13 @@
 # PostProc: Post processing routines for CFD simulations on rectilinear grids
 
 # Load modules
+import PyPlot as plt
 import FortranFiles as FFile
 import Dates
 import WriteVTK
 import FFTW
 using Printf
+using Base.Threads: @threads
 # Load functions
 include("src/structs.jl")
 include("src/file_io.jl")
@@ -20,8 +22,8 @@ const t1 = report("Starting post-processing", 1)
 # Read parameter file
 const grid, input, thermo, x0, dataDir = readSettings("post.par")
 # Get first time step
-t::Float64 = 0.0
-timeStep::String = rpad(string(round(t, digits=8)), 10, "0")
+t = 0.0
+timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
 const x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
 
@@ -30,8 +32,12 @@ for n = 1:input.nFiles
     # Get time step
     global t = input.startTime + (n - 1) * input.Δt
     global timeStep = rpad(string(round(t, digits=8)), 10, "0")
+
     # Load solution
     Q = readPlot3DSolution(timeStep, grid.Nx, grid.Ny, grid.Nz, input.nVars, dataDir)
+
+    # Convert to primitive variables
+    convertSolution!(Q, grid.Nx, grid.Ny, grid.Nz, input.nVars)
 
     # Write out full solution
     writeSolution(t, x, y, z, Q, input.nVars, dataDir)

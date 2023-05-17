@@ -60,6 +60,30 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
     return QBar
 end
 
+# Function to convert to primitive variables
+function convertSolution!(Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64)
+    # Reporting
+    tStart = report("Converting to primitive variables", 1)
+    # Loop over all cells
+    @inbounds for k = 1:Nz
+        @inbounds for j = 1:Ny
+            @inbounds for i = 1:Nx
+                rhoInv = 1.0 / Q[i, j, k, nVars-3]
+                Q[i, j, k, 1] *= rhoInv
+                Q[i, j, k, 2] *= rhoInv
+                Q[i, j, k, 3] *= rhoInv
+                if (nVars >= 10)
+                    Q[i, j, k, 5] *= rhoInv
+                    Q[i, j, k, 6] *= rhoInv
+                end              
+            end
+        end
+    end
+    # Reporting 
+    tEnd = report("Finished converting to primitive variables...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
+end
+
 # Function to calculate volume fraction from mass fraction (note: assumes species 1)
 function volumeFraction(Y1::Float64, R::Array{Float64,1})
     # Calculate denominator
