@@ -71,13 +71,13 @@ function writeSolution(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3
         # Write solution to a .vtr file
         filename = "$(dataDir)/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
         @inbounds WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
-            vtk["MomentumX", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 1])
-            vtk["MomentumY", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 2])
-            vtk["MomentumZ", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 3])
+            vtk["VelocityX", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 1])
+            vtk["VelocityY", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 2])
+            vtk["VelocityZ", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 3])
             vtk["EnergyDensity", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 4])
             if (iNVars >= 10)
                 @inbounds for v = 1:2
-                    vtk["DensityMassFraction$(v)", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 4+v])
+                    vtk["MassFraction$(v)", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 4+v])
                 end
             end
             if (iNVars == 12)
@@ -128,13 +128,13 @@ function writeSlice(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, 
         # Write slice to a .vtr file
         filename = "$(dataDir)/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
         @inbounds WriteVTK.vtk_grid(filename, x1, x2) do vtk
-            vtk["MomentumX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
-            vtk["MomentumY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
-            vtk["MomentumZ", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 3]
+            vtk["VelocityX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
+            vtk["VelocityY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
+            vtk["VelocityZ", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 3]
             vtk["EnergyDensity", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4]
             if (iNVars >= 10)
                 @inbounds for v = 1:2
-                    vtk["DensityMassFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4+v]
+                    vtk["MassFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4+v]
                 end
             end
             if (iNVars == 12)
@@ -290,7 +290,7 @@ function writePlaneAverages(t::Float64, QBar::planeAverage, grid::rectilinearGri
     # Write header
     write(f, "# x   rhoBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR-1
+    @inbounds for i = iL:iR
         write(f, "$(@sprintf("%.15e", QBar.x[i]))   $(@sprintf("%.15e", QBar.rhoBar[i]))   $(@sprintf("%.15e", QBar.UBar[i]))   $(@sprintf("%.15e", QBar.Y1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Z2Bar[i]))\n")
     end
     # Close file
@@ -347,7 +347,7 @@ function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Fl
     # Write header
     write(f, "# x   R11   R22   R33\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR-1
+    @inbounds for i = iL:iR
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", R11[i]))   $(@sprintf("%.15e", R22[i]))   $(@sprintf("%.15e", R33[i]))\n")
     end
     # Close file
@@ -368,7 +368,7 @@ function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Fl
     # Write header
     write(f, "# x   epsilonx   epsilony   epsilonz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR-1
+    @inbounds for i = iL:iR
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", εx[i]))   $(@sprintf("%.15e", εy[i]))   $(@sprintf("%.15e", εz[i]))\n")
     end
     # Close file
@@ -389,7 +389,7 @@ function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{F
     # Write header
     write(f, "# x   lambdax   lambday   lambday\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR-1
+    @inbounds for i = iL:iR
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", λx[i]))   $(@sprintf("%.15e", λy[i]))   $(@sprintf("%.15e", λz[i]))\n")
     end
     # Close file
@@ -410,7 +410,7 @@ function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Arr
     # Write header
     write(f, "# x   etax   etay   etaz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR-1
+    @inbounds for i = iL:iR
         write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", ηx[i]))   $(@sprintf("%.15e", ηy[i]))   $(@sprintf("%.15e", ηz[i]))\n")
     end
     # Close file
@@ -475,6 +475,31 @@ function writeIntegralLength(t::Float64, Lyz::Float64, dataDir::String)
     end
     # Write data in scientific format with 15 digits
     write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", Lyz))\n")
+    # Close file
+    close(f)
+end
+
+# Function to write out velocity correlation to a space delimited text file
+function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,2}, R22::Array{Float64,2}, R33::Array{Float64,2}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name
+    filename = "$(dataDir)/velocityCorrelationX_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing velocity correlation to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   R11\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f, "$(@sprintf("%.15e", x[i]))   ")
+        for j = 1:size(R11, 1)
+            write(f, "$(@sprintf("%.15e", R11[j,i]))   ")
+        end
+        write(f, "\n")
+    end
     # Close file
     close(f)
 end
