@@ -24,20 +24,19 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
     @inbounds for k = 1:Nz
         @inbounds for j = 1:Ny
             @inbounds for i = 1:Nx
-                rhoInv = 1.0 / Q[i, j, k, nVars-3]
                 rhoBar[i] += Q[i, j, k, nVars-3]
-                UBar[i] += Q[i, j, k, 1] * rhoInv
+                UBar[i] += Q[i, j, k, 1]
                 if (nVars >= 10)
-                    Y1 = Q[i, j, k, 5] * rhoInv
-                    Y1Bar[i] += Y1
-                    muBar[i] += 1.0 / (Y1 / μ[1] + (1.0 - Y1) / μ[2])
-                    nuBar[i] += rhoInv / (Y1 / μ[1] + (1.0 - Y1) / μ[2])
+                    Y1 = Q[i, j, k, 5]
+                    Y1Bar[i] += Q[i, j, k, 5]
+                    muBar[i] += 1.0 / (Q[i, j, k, 5] / μ[1] + (1.0 - Q[i, j, k, 5]) / μ[2])
+                    nuBar[i] += 1.0 / (Q[i, j, k, nVars-3] * (Q[i, j, k, 5] / μ[1] + (1.0 - Q[i, j, k, 5]) / μ[2]))
                 end
                 if (nVars == 12)
                     Z1Bar[i] += Q[i, j, k, 7]
                     Z1Z2Bar[i] += Q[i, j, k, 7] * Q[i, j, k, 8]
                 elseif (nVars == 10)
-                    Z1 = volumeFraction(Y1, R)
+                    Z1 = volumeFraction(Q[i, j, k, 5], R)
                     Z1Bar[i] += Z1
                     Z1Z2Bar[i] += Z1 * (1.0 - Z1)
                 end
