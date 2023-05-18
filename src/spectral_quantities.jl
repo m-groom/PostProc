@@ -4,14 +4,11 @@
 function calcSpectralQuantities(t::Float64, x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate radial power spectra
     tStart = report("Calculating radial power spectra", 1)
-    @time Ex, Ey, Ez, κ = calcPowerSpectra(x, Q, QBar, grid)
+    Eyz, κ = calcPowerSpectra(x, Q, QBar, grid)
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
-    exit()
-    # Write energy spectra to file
-    writeEnergySpectra(t, κ, Ex, Ey, Ez, grid, num, dataDir)
     # Calculate integral length
-    Lyz = calcIntegralLength(κ, Ey, Ez, grid)
+    Lyz = calcIntegralLength(κ, Eyz, grid)
     # Write integral length to file
     writeIntegralLength(t, Lyz, dataDir)
 end
@@ -75,8 +72,12 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
             end
         end
     end
+    # Write energy spectra to file
+    writeEnergySpectra(t, κ1D, E1Dx, E1Dy, E1Dz, x, grid, dataDir)
+    # Calculate total energy in yz direction
+    E1Dyz = E1Dy .+ E1Dz
     
-    return E1Dx, E1Dy, E1Dz, κ1D
+    return E1Dyz, κ1D
 
 end
 

@@ -464,31 +464,64 @@ function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Arr
 end
 
 # Function to write energy spectra to a space delimited text file
-function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid, num::Array{Int64,1}, dataDir::String)
-    # Calculate denoising term
-    Δκy = 2.0 * π / (grid.yR - grid.yL)
-    Δκz = 2.0 * π / (grid.zR - grid.zL)
-    Δκ = min(Δκy, Δκz)
-    denoise = 2.0 .* π .* κ ./ (Δκ * num)
-    # Denoise spectra
-    Ex = Ex .* denoise
-    Ey = Ey .* denoise
-    Ez = Ez .* denoise
+function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,2}, Ey::Array{Float64,2}, Ez::Array{Float64,2}, x::SubArray{Float32,1}, grid::rectilinearGrid, dataDir::String)
     # Calculate Nyquist wavenumber
     N = Int(max(grid.Ny / 2, grid.Nz / 2))
-    # Make file name
-    filename = "$(dataDir)/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing energy spectra to file $filename")
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name for Ex
+    filename = "$(dataDir)/spectraX_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing energy spectra Ex to file $filename")
     # Open file
-    f = open(filename, "w")
+    f1 = open(filename, "w")
     # Write header
-    write(f, "# kappa   Ex   Ey   Ez\n")
+    write(f1, "# x   Ex\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = 1:N+1
-        write(f, "$(@sprintf("%.15e", κ[i]))   $(@sprintf("%.15e", Ex[i]))   $(@sprintf("%.15e", Ey[i]))   $(@sprintf("%.15e", Ez[i]))\n")
+    @inbounds for i = iL:iR
+        write(f1, @sprintf("%.15e", x[i]), "   ")
+        @inbounds for j = 1:N+1
+            write(f1, @sprintf("%.15e", Ex[j,i]), "   ")
+        end
+        write(f1, "\n")
     end
     # Close file
-    close(f)
+    close(f1)
+    # Make file name for Ey
+    filename = "$(dataDir)/spectraY_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing energy spectra Ey to file $filename")
+    # Open file
+    f2 = open(filename, "w")
+    # Write header
+    write(f2, "# x   Ey\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f2, @sprintf("%.15e", x[i]), "   ")
+        @inbounds for j = 1:N+1
+            write(f2, @sprintf("%.15e", Ey[j,i]), "   ")
+        end
+        write(f2, "\n")
+    end
+    # Close file
+    close(f2)
+    # Make file name for Ez
+    filename = "$(dataDir)/spectraZ_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing energy spectra Ez to file $filename")
+    # Open file
+    f3 = open(filename, "w")
+    # Write header
+    write(f3, "# x   Ez\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f3, @sprintf("%.15e", x[i]), "   ")
+        @inbounds for j = 1:N+1
+            write(f3, @sprintf("%.15e", Ez[j,i]), "   ")
+        end
+        write(f3, "\n")
+    end
+    # Close file
+    close(f3)
 end
 
 # Function to write integral length to a space delimited text file
