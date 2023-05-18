@@ -4,17 +4,15 @@
 function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
-    @time R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, nVars, x0, dataDir)
+    R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
-    exit()
     # Calculate correlation lengths
     tStart = report("Calculating correlation lengths", 1)
-    Λx, Λyz = calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
+    calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
     tEnd = report("Finished calculating correlation lengths...", 1)
     report("Elapsed time: $(tEnd - tStart)")
-    # Write correlation lengths to file
-    writeCorrelationLengths(t, Λx, Λyz, dataDir)
+    exit()
     # Calculate directional length scales
     tStart = report("Calculating directional length scales", 1)
     λx, λyz, ηx, ηyz = calcLengthScales(t, x, y, z, Q, QBar, grid, nVars, x0, dataDir)
@@ -30,7 +28,7 @@ function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{
 end
 
 # Function to calculate velocity correlation tensor at x = x0
-function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
+function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, t::Float64, dataDir::String)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -115,7 +113,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
 end
 
 # Function to calculate (longitudinal) correlation lengths
-function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, grid::rectilinearGrid)
+function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R33::Array{Float64,2}, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, grid::rectilinearGrid)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -128,44 +126,52 @@ function calcCorrelationLengths(R11::Array{Float64,1}, R22::Array{Float64,1}, R3
     i0 = Int(ceil(length(rx) / 2))
     j0 = Int(ceil(length(ry) / 2))
     k0 = Int(ceil(length(rz) / 2))
-    # Get location of first zero crossing
-    i2 = try
-        i0 - 1 + findfirst(x -> x < 0.0, @view(R11[i0:end])) - 1
-    catch
-        length(R11)
+    # Initialise arrays
+    Λx = zeros(Float64, grid.Nx)
+    Λy = zeros(Float64, grid.Nx)
+    Λz = zeros(Float64, grid.Nx)
+    # Loop over cells in x direction
+    @inbounds for i = iL:iR
+        # Get location of first zero crossing
+        i2 = try
+            i0 - 1 + findfirst(x -> x < 0.0, @view(R11[i0:end, i])) - 1
+        catch
+            size(R11, 1)
+        end
+        i1 = try
+            findlast(x -> x < 0.0, @view(R11[1:i0, i])) + 1
+        catch
+            1
+        end
+        j2 = try
+            j0 - 1 + findfirst(x -> x < 0.0, @view(R22[j0:end, i])) - 1
+        catch
+            size(R22, 1)
+        end
+        j1 = try
+            findlast(x -> x < 0.0, @view(R22[1:j0, i])) + 1
+        catch
+            1
+        end
+        k2 = try
+            k0 - 1 + findfirst(x -> x < 0.0, @view(R33[k0:end, i])) - 1
+        catch
+            size(R33, 1)
+        end
+        k1 = try
+            findlast(x -> x < 0.0, @view(R33[1:k0, i])) + 1
+        catch
+            1
+        end
+        # Calculate correlation lengths
+        Λx[i] = trapz(@view(rx[i1:i2]), @view(R11[i1:i2, i]))
+        Λy[i] = trapz(@view(ry[j1:j2]), @view(R22[j1:j2, i]))
+        Λz[i] = trapz(@view(rz[k1:k2]), @view(R33[k1:k2, i]))
     end
-    i1 = try
-        findlast(x -> x < 0.0, @view(R11[1:i0])) + 1
-    catch
-        1
-    end
-    j2 = try
-        j0 - 1 + findfirst(x -> x < 0.0, @view(R22[j0:end])) - 1
-    catch
-        length(R22)
-    end
-    j1 = try
-        findlast(x -> x < 0.0, @view(R22[1:j0])) + 1
-    catch
-        1
-    end
-    k2 = try
-        k0 - 1 + findfirst(x -> x < 0.0, @view(R33[k0:end])) - 1
-    catch
-        length(R33)
-    end
-    k1 = try
-        findlast(x -> x < 0.0, @view(R33[1:k0])) + 1
-    catch
-        1
-    end
-    # Calculate correlation lengths
-    Λx = trapz(@view(rx[i1:i2]), @view(R11[i1:i2]))
-    Λy = trapz(@view(ry[j1:j2]), @view(R22[j1:j2]))
-    Λz = trapz(@view(rz[k1:k2]), @view(R33[k1:k2]))
+    # Calculate average correlation length in yz plane
     Λyz = 0.5 .* (Λy .+ Λz)
-
-    return Λx, Λyz
+    # Write correlation lengths to file
+    writeCorrelationLengths(t, x, Λx, Λyz, grid, dataDir)
 
 end
 

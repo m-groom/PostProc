@@ -300,18 +300,22 @@ function writePlaneAverages(t::Float64, QBar::planeAverage, grid::rectilinearGri
 end
 
 # Function to write correlation lengths to file
-function writeCorrelationLengths(t::Float64, Λx::Float64, Λyz::Float64, dataDir::String)
-    # Get filename
-    filename = "$(dataDir)/correlationLengths.dat"
+function writeCorrelationLengths(t::Float64, x::SubArray{Float32,1}, Λx::Array{Float64,1}, Λyz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name
+    filename = "$(dataDir)/correlationLengths_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
     report("Writing correlation lengths to file $filename")
-    # Append to file
-    f = open(filename, "a")
-    # Write header if file is empty
-    if (filesize(filename) == 0)
-        write(f, "# t   Lambdax   Lambdayz\n")
-    end
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   Lambdax   Lambdayz\n")
     # Write data in scientific format with 15 digits
-    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", Λx))   $(@sprintf("%.15e", Λyz))\n")
+    @inbounds for i = iL:iR
+        write(f, @sprintf("%.15e", x[i]),"   ", @sprintf("%.15e", Λx[i]),"   ", @sprintf("%.15e", Λyz[i]), "\n")
+    end
     # Close file
     close(f)
 end
@@ -494,9 +498,9 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     write(f1, "# x   R11\n")
     # Write data in scientific format with 15 digits
     @inbounds for i = iL:iR
-        write(f1, @sprintf("%.15e", x[i]),"   ")
+        write(f1, @sprintf("%.15e", x[i]), "   ")
         @inbounds for j = 1:size(R11, 1)
-            write(f1, @sprintf("%.15e", R11[j,i]),"   ")
+            write(f1, @sprintf("%.15e", R11[j, i]), "   ")
         end
         write(f1, "\n")
     end
@@ -511,9 +515,9 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     write(f2, "# x   R22\n")
     # Write data in scientific format with 15 digits
     @inbounds for i = iL:iR
-        write(f2, @sprintf("%.15e", x[i]),"   ")
+        write(f2, @sprintf("%.15e", x[i]), "   ")
         @inbounds for j = 1:size(R22, 1)
-            write(f2, @sprintf("%.15e", R22[j,i]),"   ")
+            write(f2, @sprintf("%.15e", R22[j, i]), "   ")
         end
         write(f2, "\n")
     end
@@ -528,9 +532,9 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     write(f3, "# x   R33\n")
     # Write data in scientific format with 15 digits
     @inbounds for i = iL:iR
-        write(f3, @sprintf("%.15e", x[i]),"   ")
+        write(f3, @sprintf("%.15e", x[i]), "   ")
         @inbounds for j = 1:size(R33, 1)
-            write(f3, @sprintf("%.15e", R33[j,i]),"   ")
+            write(f3, @sprintf("%.15e", R33[j, i]), "   ")
         end
         write(f3, "\n")
     end
