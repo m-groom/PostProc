@@ -7,7 +7,8 @@ import Dates
 import WriteVTK
 import FFTW
 using Printf
-using Base.Threads: @threads
+# using Base.Threads: @threads
+using LoopVectorization: @turbo
 # Load functions
 include("src/structs.jl")
 include("src/file_io.jl")

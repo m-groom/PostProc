@@ -485,21 +485,55 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
-    # Make file name
+    # Make file name for R11
     filename = "$(dataDir)/velocityCorrelationX_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing velocity correlation to file $filename")
+    report("Writing velocity correlation R11 to file $filename")
     # Open file
-    f = open(filename, "w")
+    f1 = open(filename, "w")
     # Write header
-    write(f, "# x   R11\n")
+    write(f1, "# x   R11\n")
     # Write data in scientific format with 15 digits
     @inbounds for i = iL:iR
-        write(f, "$(@sprintf("%.15e", x[i]))   ")
-        for j = 1:size(R11, 1)
-            write(f, "$(@sprintf("%.15e", R11[j,i]))   ")
+        write(f1, @sprintf("%.15e", x[i]),"   ")
+        @inbounds for j = 1:size(R11, 1)
+            write(f1, @sprintf("%.15e", R11[j,i]),"   ")
         end
-        write(f, "\n")
+        write(f1, "\n")
     end
     # Close file
-    close(f)
+    close(f1)
+    # Make file name for R22
+    filename = "$(dataDir)/velocityCorrelationY_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing velocity correlation R22 to file $filename")
+    # Open file
+    f2 = open(filename, "w")
+    # Write header
+    write(f2, "# x   R22\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f2, @sprintf("%.15e", x[i]),"   ")
+        @inbounds for j = 1:size(R22, 1)
+            write(f2, @sprintf("%.15e", R22[j,i]),"   ")
+        end
+        write(f2, "\n")
+    end
+    # Close file
+    close(f2)
+    # Make file name for R33
+    filename = "$(dataDir)/velocityCorrelationZ_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing velocity correlation R33 to file $filename")
+    # Open file
+    f3 = open(filename, "w")
+    # Write header
+    write(f3, "# x   R33\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f3, @sprintf("%.15e", x[i]),"   ")
+        @inbounds for j = 1:size(R33, 1)
+            write(f3, @sprintf("%.15e", R33[j,i]),"   ")
+        end
+        write(f3, "\n")
+    end
+    # Close file
+    close(f3)
 end
