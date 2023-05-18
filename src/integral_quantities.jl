@@ -4,9 +4,10 @@
 function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
-    R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, nVars, x0)
+    @time R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, nVars, x0, dataDir)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
+    exit()
     # Calculate correlation lengths
     tStart = report("Calculating correlation lengths", 1)
     Λx, Λyz = calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
@@ -29,77 +30,67 @@ function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{
 end
 
 # Function to calculate velocity correlation tensor at x = x0
-function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64)
+function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
-    # Get grid extents
-    yextent = grid.yR - grid.yL
-    zextent = grid.zR - grid.zL
     # Get separation directions
     rx = @view(x[iL:iR]) .- 0.5 .* x[iR]
     ry = y .- 0.5 .* y[end]
     rz = z .- 0.5 .* z[end]
     # Initialise arrays
-    R11 = zeros(Float64, length(rx)) # <u'(x)u'(x+rx)>
-    R22 = zeros(Float64, length(ry)) # <v'(x)v'(x+ry)>
-    R33 = zeros(Float64, length(rz)) # <w'(x)w'(x+rz)>
+    R11 = zeros(Float64, length(rx), grid.Nx) # <u'(x)u'(x+rx)>
+    R22 = zeros(Float64, length(ry), grid.Nx) # <v'(x)v'(x+ry)>
+    R33 = zeros(Float64, length(rz), grid.Nx) # <w'(x)w'(x+rz)>
     nPtsInv = 1.0 / (grid.Ny * grid.Nz)
-    # Find index where x = x0
-    i = searchsortedfirst(x, x0) - 1
     # Loop over all cells
     @inbounds for k = 1:grid.Nz
         @inbounds for j = 1:grid.Ny
-            # Calculate fluctuating velocities at (i,j,k)
-            DaInv = 1.0 / Q[i, j, k, nVars-3]
-            Ua = Q[i, j, k, 1] * DaInv - QBar.UBar[i]
-            Va = Q[i, j, k, 2] * DaInv - QBar.VBar[i]
-            Wa = Q[i, j, k, 3] * DaInv - QBar.WBar[i]
-            # Calculate correlations in the x direction
-            @inbounds for ii in eachindex(rx)
-                # Get index of point to calculate flucuation at
-                xp = x[i] + rx[ii]
-                idx = searchsortedfirst(x, xp) - 1
-                # Calculate fluctuating velocities at (idx,j,k)
-                DbInv = 1.0 / Q[idx, j, k, nVars-3]
-                Ub = Q[idx, j, k, 1] * DbInv - QBar.UBar[idx]
-                # Calculate velocity correlation tensor components in the x direction
-                R11[ii] += Ua * Ub
-            end
-            # Calculate correlations in the y direction
-            @inbounds for jj in eachindex(ry)
-                # Get index of point to calculate flucuation at
-                yp = y[j] + ry[jj]
-                # Restrict y to be within 0 and 2π
-                if yp < grid.yL
-                    yp += yextent
-                elseif yp > grid.yR
-                    yp -= yextent
+            @inbounds for i = iL:iR
+                # Calculate fluctuating velocities at (i,j,k)
+                Ua = Q[i, j, k, 1] - QBar.UBar[i]
+                Va = Q[i, j, k, 2] - QBar.VBar[i]
+                Wa = Q[i, j, k, 3] - QBar.WBar[i]
+                # Calculate correlations in the x direction
+                @inbounds for ii in eachindex(rx)
+                    # Get index of point to calculate flucuation at
+                    xp = x[i] + rx[ii]
+                    # Interpolate velocity at xp
+                    Ub = interp1D(xp, x, @view(Q[:, j, k, 1]), QBar.UBar)
+                    # Calculate velocity correlation tensor components in the x direction
+                    R11[ii, i] += Ua * Ub
                 end
-                idx = searchsortedfirst(y, yp) - 1
-                # Calculate fluctuating velocities at (i,idx,k)
-                DbInv = 1.0 / Q[i, idx, k, nVars-3]
-                Vb = Q[i, idx, k, 2] * DbInv - QBar.VBar[i]
-                # Calculate velocity correlation tensor components in the y direction
-                R22[jj] += Va * Vb
-            end
-            # Calculate correlations in the z direction
-            @inbounds for kk in eachindex(rz)
-                # Get index of point to calculate flucuation at
-                zp = z[k] + rz[kk]
-                # Restrict z to be within 0 and 2π
-                if zp < grid.zL
-                    zp += zextent
-                elseif zp > grid.zR
-                    zp -= zextent
+                # Calculate correlations in the y direction
+                @inbounds for jj in eachindex(ry)
+                    # Get index of point to calculate flucuation at
+                    idx = Int(j + jj - grid.Ny / 2)
+                    # Restrict y to be within 0 and 2π
+                    if (idx <= 0) 
+                        idx += grid.Ny
+                    elseif (idx > grid.Ny)
+                        idx -= grid.Ny
+                    end
+                    # Interpolate velocity at idx
+                    Vb = Q[i, idx, k, 2] - QBar.VBar[i]
+                    # Calculate velocity correlation tensor components in the y direction
+                    R22[jj, i] += Va * Vb
                 end
-                idx = searchsortedfirst(z, zp) - 1
-                # Calculate fluctuating velocities at (i,j,idx)
-                DbInv = 1.0 / Q[i, j, idx, nVars-3]
-                Wb = Q[i, j, idx, 3] * DbInv - QBar.WBar[i]
-                # Calculate velocity correlation tensor components in the z direction
-                R33[kk] += Wa * Wb
+                # Calculate correlations in the z direction
+                @inbounds for kk in eachindex(rz)
+                    # Get index of point to calculate flucuation at
+                    idx = Int(k + kk - grid.Nz / 2)
+                    # Restrict z to be within 0 and 2π
+                    if (idx <= 0) 
+                        idx += grid.Nz
+                    elseif (idx > grid.Nz)
+                        idx -= grid.Nz
+                    end
+                    # Interpolate velocity at idx
+                    Wb = Q[i, j, idx, 3] - QBar.WBar[i]
+                    # Calculate velocity correlation tensor components in the z direction
+                    R33[kk, i] += Wa * Wb
+                end
             end
         end
     end
@@ -109,11 +100,15 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     R33 *= nPtsInv
     # Normalise by Rab(0)
     i0 = Int(ceil(length(rx) / 2))
-    R11 /= R11[i0]
     j0 = Int(ceil(length(ry) / 2))
-    R22 /= R22[j0]
-    k0 = Int(ceil(length(rz) / 2))
-    R33 /= R33[k0]
+    k0 = Int(ceil(length(rz) / 2)) 
+    @inbounds for i = iL:iR
+        R11[:, i] /= R11[i0, i]
+        R22[:, i] /= R22[j0, i]
+        R33[:, i] /= R33[k0, i]
+    end
+    # Write velocity correlations to file
+    writeVelocityCorrelation(t, x, R11, R22, R33, grid, dataDir)
 
     return R11, R22, R33
 

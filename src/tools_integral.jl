@@ -37,3 +37,23 @@ function dUdY(y::SubArray{Float32,1}, U::SubArray{Float32,1}, j::Int64)
         return (U[j+1] - U[j-1]) / (y[j+1] - y[j-1])
     end
 end
+
+# Function to interpolate the x velocity at a given point
+function interp1D(x0::Float64, x::SubArray{Float32,1}, U::SubArray{Float32,1}, UBar::Array{Float64,1})
+    # Find the cell containing x0
+    i = searchsortedfirst(x, x0) - 1
+    if (x[i] <= x0)
+        # Grid spacings
+        ΔxC = x[i+1] - x[i]
+        ΔxL = x[i] - x[i-1]
+        ΔxR = x[i+2] - x[i+1]
+        # Get values at node i
+        Um = ((U[i-1] - UBar[i-1]) * ΔxL + (U[i] - UBar[i]) * ΔxC) / (ΔxL + ΔxC)
+        # Get values at node i+1
+        Up = ((U[i] - UBar[i]) * ΔxC + (U[i+1] - UBar[i+1]) * ΔxR) / (ΔxC + ΔxR)
+    else
+        error("x0 < x[i]")
+    end
+    # Interpolate
+    return Up + (Up - Um) * (x0 - x[i]) / ΔxC
+end
