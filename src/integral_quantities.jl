@@ -12,18 +12,10 @@ function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{
     calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
     tEnd = report("Finished calculating correlation lengths...", 1)
     report("Elapsed time: $(tEnd - tStart)")
-    exit()
     # Calculate directional length scales
     tStart = report("Calculating directional length scales", 1)
-    λx, λyz, ηx, ηyz = calcLengthScales(t, x, y, z, Q, QBar, grid, nVars, x0, dataDir)
+    @time calcLengthScales(t, x, y, z, Q, QBar, grid, nVars, x0, dataDir)
     tEnd = report("Finished calculating directional length scales...", 1)
-    report("Elapsed time: $(tEnd - tStart)")
-    # Write directional length scales to file
-    writeLengthScales(t, λx, λyz, ηx, ηyz, dataDir)
-    # Calculate integral width
-    tStart = report("Calculating integral width", 1)
-    W, H = calcIntegralWidth(t, QBar, dataDir)
-    tEnd = report("Finished calculating integral width...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
 
@@ -168,10 +160,8 @@ function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R3
         Λy[i] = trapz(@view(ry[j1:j2]), @view(R22[j1:j2, i]))
         Λz[i] = trapz(@view(rz[k1:k2]), @view(R33[k1:k2, i]))
     end
-    # Calculate average correlation length in yz plane
-    Λyz = 0.5 .* (Λy .+ Λz)
     # Write correlation lengths to file
-    writeCorrelationLengths(t, x, Λx, Λyz, grid, dataDir)
+    writeCorrelationLengths(t, x, Λx, Λy, Λz, grid, dataDir)
 
 end
 
@@ -245,11 +235,9 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     λx = sqrt.(R11 ./ dudxSquared)
     λy = sqrt.(R22 ./ dvdySquared)
     λz = sqrt.(R33 ./ dwdzSquared)
-    λyz = 0.5 .* (λy .+ λz)
     ηx = (QBar.nuBar .^ 3 ./ εx) .^ 0.25
     ηy = (QBar.nuBar .^ 3 ./ εy) .^ 0.25
-    ηz = (QBar.nuBar .^ 3 ./ εz) .^ 0.25
-    ηyz = 0.5 .* (ηy .+ ηz)
+    ηz = (QBar.nuBar .^ 3 ./ εz) .^ 0.25  
     # Write Reynolds stresses to file
     writeReynoldsStresses(t, x, R11, R22, R33, grid, dataDir)
     # Write dissipation rates to file
@@ -258,9 +246,5 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     writeTaylorMicroscales(t, x, λx, λy, λz, grid, dataDir)
     # Write Kolmogorov microscales to file
     writeKolmogorovMicroscales(t, x, ηx, ηy, ηz, grid, dataDir)
-    # Get location of interface
-    i0 = searchsortedfirst(x, x0) - 1
-
-    return λx[i0], λyz[i0], ηx[i0], ηyz[i0]
 
 end

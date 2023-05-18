@@ -291,196 +291,12 @@ function writePlaneAverages(t::Float64, QBar::planeAverage, grid::rectilinearGri
     write(f, "# x   rhoBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
     # Write data in scientific format with 15 digits
     @inbounds for i = iL:iR
-        write(f, "$(@sprintf("%.15e", QBar.x[i]))   $(@sprintf("%.15e", QBar.rhoBar[i]))   $(@sprintf("%.15e", QBar.UBar[i]))   $(@sprintf("%.15e", QBar.Y1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Bar[i]))   $(@sprintf("%.15e", QBar.Z1Z2Bar[i]))\n")
+        write(f, @sprintf("%.15e", QBar.x[i]), "   ", @sprintf("%.15e", QBar.rhoBar[i]), "   ", @sprintf("%.15e", QBar.UBar[i]), "   ", @sprintf("%.15e", QBar.Y1Bar[i]), "   ", @sprintf("%.15e", QBar.Z1Bar[i]), "   ", @sprintf("%.15e", QBar.Z1Z2Bar[i]), "\n")
     end
     # Close file
     close(f)
     tEnd = report("Finished writing plane averages", 1)
     report("Elapsed time: $(tEnd - tStart)")
-end
-
-# Function to write correlation lengths to file
-function writeCorrelationLengths(t::Float64, x::SubArray{Float32,1}, Λx::Array{Float64,1}, Λyz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
-    # Find index where x = xL
-    iL = searchsortedfirst(x, grid.xL)
-    # Find index where x = xR
-    iR = searchsortedfirst(x, grid.xR)
-    # Make file name
-    filename = "$(dataDir)/correlationLengths_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing correlation lengths to file $filename")
-    # Open file
-    f = open(filename, "w")
-    # Write header
-    write(f, "# x   Lambdax   Lambdayz\n")
-    # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", x[i]),"   ", @sprintf("%.15e", Λx[i]),"   ", @sprintf("%.15e", Λyz[i]), "\n")
-    end
-    # Close file
-    close(f)
-end
-
-# Function to write length scales to a space delimited text file
-function writeLengthScales(t::Float64, λx::Float64, λyz::Float64, ηx::Float64, ηyz::Float64, dataDir::String)
-    # Get filename
-    filename = "$(dataDir)/lengthScales.dat"
-    report("Writing length scales to file $filename")
-    # Append to file
-    f = open(filename, "a")
-    # Write header if file is empty
-    if (filesize(filename) == 0)
-        write(f, "# t   lambdax   lambdayz   etax   etayz\n")
-    end
-    # Write data in scientific format with 15 digits
-    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", λx))   $(@sprintf("%.15e", λyz))   $(@sprintf("%.15e", ηx))   $(@sprintf("%.15e", ηyz))\n")
-    # Close file
-    close(f)
-end
-
-# Function to write out Reynolds stresses to a space delimited text file
-function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
-    # Find index where x = xL
-    iL = searchsortedfirst(x, grid.xL)
-    # Find index where x = xR
-    iR = searchsortedfirst(x, grid.xR)
-    # Make file name
-    filename = "$(dataDir)/reynoldsStresses_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing Reynolds stresses to file $filename")
-    # Open file
-    f = open(filename, "w")
-    # Write header
-    write(f, "# x   R11   R22   R33\n")
-    # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", R11[i]))   $(@sprintf("%.15e", R22[i]))   $(@sprintf("%.15e", R33[i]))\n")
-    end
-    # Close file
-    close(f)
-end
-
-# Function to write out dissipation rates to a space delimited text file
-function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
-    # Find index where x = xL
-    iL = searchsortedfirst(x, grid.xL)
-    # Find index where x = xR
-    iR = searchsortedfirst(x, grid.xR)
-    # Make file name
-    filename = "$(dataDir)/dissipationRates_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing dissipation rates to file $filename")
-    # Open file
-    f = open(filename, "w")
-    # Write header
-    write(f, "# x   epsilonx   epsilony   epsilonz\n")
-    # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", εx[i]))   $(@sprintf("%.15e", εy[i]))   $(@sprintf("%.15e", εz[i]))\n")
-    end
-    # Close file
-    close(f)
-end
-
-# Function to write out Taylor microscales to a space delimited text file
-function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
-    # Find index where x = xL
-    iL = searchsortedfirst(x, grid.xL)
-    # Find index where x = xR
-    iR = searchsortedfirst(x, grid.xR)
-    # Make file name
-    filename = "$(dataDir)/taylor_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing Taylor microscales to file $filename")
-    # Open file
-    f = open(filename, "w")
-    # Write header
-    write(f, "# x   lambdax   lambday   lambday\n")
-    # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", λx[i]))   $(@sprintf("%.15e", λy[i]))   $(@sprintf("%.15e", λz[i]))\n")
-    end
-    # Close file
-    close(f)
-end
-
-# Function to write out Kolmogorov microscales to a space delimited text file
-function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
-    # Find index where x = xL
-    iL = searchsortedfirst(x, grid.xL)
-    # Find index where x = xR
-    iR = searchsortedfirst(x, grid.xR)
-    # Make file name
-    filename = "$(dataDir)/kolmogorov_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing Kolmogorov microscales to file $filename")
-    # Open file
-    f = open(filename, "w")
-    # Write header
-    write(f, "# x   etax   etay   etaz\n")
-    # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, "$(@sprintf("%.15e", x[i]))   $(@sprintf("%.15e", ηx[i]))   $(@sprintf("%.15e", ηy[i]))   $(@sprintf("%.15e", ηz[i]))\n")
-    end
-    # Close file
-    close(f)
-end
-
-# Function to write integral width to a space delimited text file
-function writeIntegralWidth(t::Float64, W::Float64, H::Float64, dataDir::String)
-    # Get filename
-    filename = "$(dataDir)/integralWidth.dat"
-    report("Writing integral and product widths to file $filename")
-    # Append to file
-    f = open(filename, "a")
-    # Write header if file is empty
-    if (filesize(filename) == 0)
-        write(f, "# t   W   H\n")
-    end
-    # Write data in scientific format with 15 digits
-    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", W))   $(@sprintf("%.15e", H))\n")
-    # Close file
-    close(f)
-end
-
-# Function to write energy spectra to a space delimited text file
-function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid, num::Array{Int64,1}, dataDir::String)
-    # Calculate denoising term
-    Δκy = 2.0 * π / (grid.yR - grid.yL)
-    Δκz = 2.0 * π / (grid.zR - grid.zL)
-    Δκ = min(Δκy, Δκz)
-    denoise = 2.0 .* π .* κ ./ (Δκ * num)
-    # Denoise spectra
-    Ex = Ex .* denoise
-    Ey = Ey .* denoise
-    Ez = Ez .* denoise
-    # Calculate Nyquist wavenumber
-    N = Int(max(grid.Ny / 2, grid.Nz / 2))
-    # Make file name
-    filename = "$(dataDir)/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
-    report("Writing energy spectra to file $filename")
-    # Open file
-    f = open(filename, "w")
-    # Write header
-    write(f, "# kappa   Ex   Ey   Ez\n")
-    # Write data in scientific format with 15 digits
-    @inbounds for i = 1:N+1
-        write(f, "$(@sprintf("%.15e", κ[i]))   $(@sprintf("%.15e", Ex[i]))   $(@sprintf("%.15e", Ey[i]))   $(@sprintf("%.15e", Ez[i]))\n")
-    end
-    # Close file
-    close(f)
-end
-
-# Function to write integral length to a space delimited text file
-function writeIntegralLength(t::Float64, Lyz::Float64, dataDir::String)
-    # Get filename
-    filename = "$(dataDir)/integralLength.dat"
-    report("Writing integral length to file $filename")
-    # Append to file
-    f = open(filename, "a")
-    # Write header if file is empty
-    if (filesize(filename) == 0)
-        write(f, "# t   Lyz\n")
-    end
-    # Write data in scientific format with 15 digits
-    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", Lyz))\n")
-    # Close file
-    close(f)
 end
 
 # Function to write out velocity correlation to a space delimited text file
@@ -540,4 +356,154 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     end
     # Close file
     close(f3)
+end
+
+# Function to write correlation lengths to file
+function writeCorrelationLengths(t::Float64, x::SubArray{Float32,1}, Λx::Array{Float64,1}, Λy::Array{Float64,1}, Λz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name
+    filename = "$(dataDir)/correlationLengths_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing correlation lengths to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   Lambdax   Lambday   Lambdaz\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", Λx[i]), "   ", @sprintf("%.15e", Λy[i]), "   ", @sprintf("%.15e", Λz[i]), "\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write out Reynolds stresses to a space delimited text file
+function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name
+    filename = "$(dataDir)/reynoldsStresses_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing Reynolds stresses to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   R11   R22   R33\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", R11[i]), "   ", @sprintf("%.15e", R22[i]), "   ", @sprintf("%.15e", R33[i]), "\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write out dissipation rates to a space delimited text file
+function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name
+    filename = "$(dataDir)/dissipationRates_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing dissipation rates to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   epsilonx   epsilony   epsilonz\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", εx[i]), "   ", @sprintf("%.15e", εy[i]), "   ", @sprintf("%.15e", εz[i]), "\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write out Taylor microscales to a space delimited text file
+function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name
+    filename = "$(dataDir)/taylor_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing Taylor microscales to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   lambdax   lambday   lambday\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", λx[i]), "   ", @sprintf("%.15e", λy[i]), "   ", @sprintf("%.15e", λz[i]), "\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write out Kolmogorov microscales to a space delimited text file
+function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Make file name
+    filename = "$(dataDir)/kolmogorov_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing Kolmogorov microscales to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# x   etax   etay   etaz\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = iL:iR
+        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", ηx[i]), "   ", @sprintf("%.15e", ηy[i]), "   ", @sprintf("%.15e", ηz[i]), "\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write energy spectra to a space delimited text file
+function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid, num::Array{Int64,1}, dataDir::String)
+    # Calculate denoising term
+    Δκy = 2.0 * π / (grid.yR - grid.yL)
+    Δκz = 2.0 * π / (grid.zR - grid.zL)
+    Δκ = min(Δκy, Δκz)
+    denoise = 2.0 .* π .* κ ./ (Δκ * num)
+    # Denoise spectra
+    Ex = Ex .* denoise
+    Ey = Ey .* denoise
+    Ez = Ez .* denoise
+    # Calculate Nyquist wavenumber
+    N = Int(max(grid.Ny / 2, grid.Nz / 2))
+    # Make file name
+    filename = "$(dataDir)/spectra_$(rpad(string(round(t, digits=5)), 7, "0")).dat"
+    report("Writing energy spectra to file $filename")
+    # Open file
+    f = open(filename, "w")
+    # Write header
+    write(f, "# kappa   Ex   Ey   Ez\n")
+    # Write data in scientific format with 15 digits
+    @inbounds for i = 1:N+1
+        write(f, "$(@sprintf("%.15e", κ[i]))   $(@sprintf("%.15e", Ex[i]))   $(@sprintf("%.15e", Ey[i]))   $(@sprintf("%.15e", Ez[i]))\n")
+    end
+    # Close file
+    close(f)
+end
+
+# Function to write integral length to a space delimited text file
+function writeIntegralLength(t::Float64, Lyz::Float64, dataDir::String)
+    # Get filename
+    filename = "$(dataDir)/integralLength.dat"
+    report("Writing integral length to file $filename")
+    # Append to file
+    f = open(filename, "a")
+    # Write header if file is empty
+    if (filesize(filename) == 0)
+        write(f, "# t   Lyz\n")
+    end
+    # Write data in scientific format with 15 digits
+    write(f, "$(@sprintf("%.15e", t))   $(@sprintf("%.15e", Lyz))\n")
+    # Close file
+    close(f)
 end

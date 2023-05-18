@@ -7,8 +7,6 @@ import Dates
 import WriteVTK
 import FFTW
 using Printf
-# using Base.Threads: @threads
-using LoopVectorization: @turbo
 # Load functions
 include("src/structs.jl")
 include("src/file_io.jl")
@@ -54,7 +52,7 @@ for n = 1:input.nFiles
 
     # Calculate integral quantities
     calcIntegralQuantities(t, @view(x[:, 1, 1]), @view(y[1, :, 1]), @view(z[1, 1, :]), Q, QBar, grid, input.nVars, x0, dataDir)
-
+    
     # Calculate spectral quantities
     calcSpectralQuantities(t, @view(x[:, 1, 1]), Q, QBar, grid, input.nVars, x0, dataDir)
 end

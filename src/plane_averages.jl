@@ -89,16 +89,3 @@ function volumeFraction(Y1::Float32, R::Array{Float64,1})
     # Calculate volume fraction
     return R[1] * Y1 / sumRY
 end
-
-# Function to calculate the integral width
-function calcIntegralWidth(t::Float64, QBar::planeAverage, dataDir::String)
-    # Calculate integral width
-    W = 6.0 * midpoint(QBar.x, QBar.Z1Bar .* (1.0 .- QBar.Z1Bar))
-    # Calculate product width
-    H = 2.0 * midpoint(QBar.x, min.(QBar.Z1Bar, 1.0 .- QBar.Z1Bar))
-    # Write W and H to file
-    writeIntegralWidth(t, W, H, dataDir)
-
-    return W, H
-
-end
