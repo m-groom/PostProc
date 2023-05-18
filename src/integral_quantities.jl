@@ -14,7 +14,7 @@ function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate directional length scales
     tStart = report("Calculating directional length scales", 1)
-    @time calcLengthScales(t, x, y, z, Q, QBar, grid, nVars, x0, dataDir)
+    calcLengthScales(t, x, y, z, Q, QBar, grid, nVars, x0, dataDir)
     tEnd = report("Finished calculating directional length scales...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
@@ -56,7 +56,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Get index of point to calculate flucuation at
                     idx = Int(j + jj - grid.Ny / 2)
                     # Restrict y to be within 0 and 2π
-                    if (idx <= 0) 
+                    if (idx <= 0)
                         idx += grid.Ny
                     elseif (idx > grid.Ny)
                         idx -= grid.Ny
@@ -71,7 +71,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Get index of point to calculate flucuation at
                     idx = Int(k + kk - grid.Nz / 2)
                     # Restrict z to be within 0 and 2π
-                    if (idx <= 0) 
+                    if (idx <= 0)
                         idx += grid.Nz
                     elseif (idx > grid.Nz)
                         idx -= grid.Nz
@@ -91,7 +91,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     # Normalise by Rab(0)
     i0 = Int(ceil(length(rx) / 2))
     j0 = Int(ceil(length(ry) / 2))
-    k0 = Int(ceil(length(rz) / 2)) 
+    k0 = Int(ceil(length(rz) / 2))
     @inbounds for i = iL:iR
         R11[:, i] /= R11[i0, i]
         R22[:, i] /= R22[j0, i]
@@ -181,10 +181,9 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     @inbounds for k = 1:grid.Nz
         @inbounds for j = 1:grid.Ny
             @inbounds for i = 1:grid.Nx
-                rhoInv = 1.0 / Q[i, j, k, nVars-3]
-                uPrime = Q[i, j, k, 1] * rhoInv - QBar.UBar[i]
-                vPrime = Q[i, j, k, 2] * rhoInv - QBar.VBar[i]
-                wPrime = Q[i, j, k, 3] * rhoInv - QBar.WBar[i]
+                uPrime = Q[i, j, k, 1] - QBar.UBar[i]
+                vPrime = Q[i, j, k, 2] - QBar.VBar[i]
+                wPrime = Q[i, j, k, 3] - QBar.WBar[i]
                 # Calculate Reynolds stresses
                 R11[i] += uPrime * uPrime
                 R22[i] += vPrime * vPrime
@@ -237,7 +236,7 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     λz = sqrt.(R33 ./ dwdzSquared)
     ηx = (QBar.nuBar .^ 3 ./ εx) .^ 0.25
     ηy = (QBar.nuBar .^ 3 ./ εy) .^ 0.25
-    ηz = (QBar.nuBar .^ 3 ./ εz) .^ 0.25  
+    ηz = (QBar.nuBar .^ 3 ./ εz) .^ 0.25
     # Write Reynolds stresses to file
     writeReynoldsStresses(t, x, R11, R22, R33, grid, dataDir)
     # Write dissipation rates to file
