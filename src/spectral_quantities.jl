@@ -8,9 +8,10 @@ function calcSpectralQuantities(t::Float64, x::SubArray{Float32,1}, Q::Array{Flo
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate integral length
-    Lyz = calcIntegralLength(κ, Eyz, grid)
-    # Write integral length to file
-    writeIntegralLength(t, Lyz, dataDir)
+    tStart = report("Calculating integral length", 1)
+    calcIntegralLength(κ, Eyz, x, grid)
+    tEnd = report("Finished calculating integral length...", 1)
+    report("Elapsed time: $(tEnd - tStart)")
 end
 
 # Function to calculate radial power spectra at x = x0 for each velocity component
@@ -82,18 +83,27 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
 end
 
 # Function to calculate integral length
-function calcIntegralLength(κ::Array{Float64,1}, Ey::Array{Float64,1}, Ez::Array{Float64,1}, grid::rectilinearGrid)
+function calcIntegralLength(κ::Array{Float64,1}, Eyz::Array{Float64,2}, x::SubArray{Float32,1}, grid::rectilinearGrid)
     # Calculate spacing in κ
     Ly = grid.yR - grid.yL
     Lz = grid.zR - grid.zL
     Δκy = 2.0 * π / Ly
     Δκz = 2.0 * π / Lz
     Δκ = max(Δκy, Δκz)
-    N = Int(max(grid.Ny / 2, grid.Nz / 2)) # Nyquist wavenumber
-    # Calculate integral length in yz plane
-    Eyz = Ey .+ Ez
-    Lyz = (3.0 * π / 4) * integrateEonK(Eyz, κ, Δκ, N) / integrate(Eyz, Δκ, N)
-
-    return Lyz
+    # Nyquist wavenumber
+    N = Int(max(grid.Ny / 2, grid.Nz / 2)) 
+    # Initialise arrays
+    Lyz = zeros(Float64, grid.Nx)
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Loop over x
+    @inbounds for i = iL:iR
+        # Calculate integral length in yz plane
+        Lyz[i] = (3.0 * π / 4) * integrateEonK(@view(Eyz[:, i]), κ, Δκ, N) / integrate(@view(Eyz[:, i]), Δκ, N)
+    end
+    # Write integral length to file
+    writeIntegralLength(t, Lyz, x, dataDir)
 
 end
