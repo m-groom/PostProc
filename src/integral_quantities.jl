@@ -1,7 +1,7 @@
 # Functions for calculating and manipulating integral quantities
 
 # Top level function to calculate integral quantities
-function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
+function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
     R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
@@ -14,7 +14,7 @@ function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate directional length scales
     tStart = report("Calculating directional length scales", 1)
-    calcLengthScales(t, x, y, z, Q, QBar, grid, nVars, x0, dataDir)
+    calcLengthScales(t, x, y, z, Q, QBar, grid, dataDir)
     tEnd = report("Finished calculating directional length scales...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
@@ -166,7 +166,7 @@ function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R3
 end
 
 # Function to calculate Taylor and Kolmorogov microscales
-function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, nVars::Int64, x0::Float64, dataDir::String)
+function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Initialise arrays
     R11 = zeros(Float64, grid.Nx) # <u'u'>
     R22 = zeros(Float64, grid.Nx) # <v'v'>

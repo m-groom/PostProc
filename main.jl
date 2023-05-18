@@ -51,10 +51,10 @@ for n = 1:input.nFiles
     writePlaneAverages(t, QBar, grid, dataDir)
 
     # Calculate integral quantities
-    calcIntegralQuantities(t, @view(x[:, 1, 1]), @view(y[1, :, 1]), @view(z[1, 1, :]), Q, QBar, grid, input.nVars, x0, dataDir)
+    calcIntegralQuantities(t, @view(x[:, 1, 1]), @view(y[1, :, 1]), @view(z[1, 1, :]), Q, QBar, grid, dataDir)
     
     # Calculate spectral quantities
-    calcSpectralQuantities(t, @view(x[:, 1, 1]), Q, QBar, grid, input.nVars, x0, dataDir)
+    calcSpectralQuantities(t, @view(x[:, 1, 1]), Q, QBar, grid, dataDir)
 end
 
 # Reporting
