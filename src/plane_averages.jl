@@ -27,11 +27,11 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
                 for i = 1:Nx
                     rhoBar[i] += Q[i, j, k, nVars-3]
                     UBar[i] += Q[i, j, k, 1]
-                    if (nVars >= 10)
-                        Y1Bar[i] += Q[i, j, k, 5]
-                        muBar[i] += 1.0 / (Q[i, j, k, 5] / μ[1] + (1.0 - Q[i, j, k, 5]) / μ[2])
-                        nuBar[i] += 1.0 / (Q[i, j, k, nVars-3] * (Q[i, j, k, 5] / μ[1] + (1.0 - Q[i, j, k, 5]) / μ[2]))
-                    end
+                    # if (nVars >= 10)
+                    Y1Bar[i] += Q[i, j, k, 5]
+                    muBar[i] += 1.0 / (Q[i, j, k, 5] / μ[1] + (1.0 - Q[i, j, k, 5]) / μ[2])
+                    nuBar[i] += 1.0 / (Q[i, j, k, nVars-3] * (Q[i, j, k, 5] / μ[1] + (1.0 - Q[i, j, k, 5]) / μ[2]))
+                    # end
                     # if (nVars == 12)
                     #     Z1Bar[i] += Q[i, j, k, 7]
                     #     Z1Z2Bar[i] += Q[i, j, k, 7] * Q[i, j, k, 8]
