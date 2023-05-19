@@ -4,7 +4,7 @@
 function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
-    @time R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
+    R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate correlation lengths
@@ -14,7 +14,7 @@ function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate directional length scales
     tStart = report("Calculating directional length scales", 1)
-    @time calcLengthScales(t, x, y, z, Q, QBar, grid, dataDir)
+    calcLengthScales(t, x, y, z, Q, QBar, grid, dataDir)
     tEnd = report("Finished calculating directional length scales...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
@@ -26,9 +26,9 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
     # Get separation directions
-    rx = @view(x[iL:iR]) .- 0.5 .* x[iR]
-    ry = y .- 0.5 .* y[end]
-    rz = z .- 0.5 .* z[end]
+    rx = @turbo x[iL:iR] .- 0.5 .* x[iR]
+    ry = @turbo y .- 0.5 .* y[end]
+    rz = @turbo z .- 0.5 .* z[end]
     # Initialise arrays
     R11 = zeros(Float64, length(rx), grid.Nx) # <u'(x)u'(x+rx)>
     R22 = zeros(Float64, length(ry), grid.Nx) # <v'(x)v'(x+ry)>
@@ -88,10 +88,20 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     end
     # Divide by number of points to get averages
     @inbounds begin
-        @batch for i = iL:iR
-            R11[:, i] *= nPtsInv
-            R22[:, i] *= nPtsInv
-            R33[:, i] *= nPtsInv
+        @tturbo for i = 1:grid.Nx
+            for ii = 1:length(rx)
+                R11[ii, i] *= nPtsInv
+            end
+        end
+        @tturbo for i = 1:grid.Nx
+            for jj = 1:length(ry)
+                R22[jj, i] *= nPtsInv
+            end
+        end
+        @tturbo for i = 1:grid.Nx
+            for kk = 1:length(rz)
+                R33[kk, i] *= nPtsInv
+            end
         end
     end
     # Normalise by Rab(0)
@@ -99,10 +109,20 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     j0 = Int(ceil(length(ry) / 2))
     k0 = Int(ceil(length(rz) / 2))
     @inbounds begin
-        @batch for i = iL:iR
-            R11[:, i] /= R11[i0, i]
-            R22[:, i] /= R22[j0, i]
-            R33[:, i] /= R33[k0, i]
+        @tturbo for i = iL:iR
+            for ii = 1:length(rx)
+                R11[ii, i] /= R11[i0, i]
+            end
+        end
+        @tturbo for i = iL:iR
+            for jj = 1:length(ry)
+                R22[jj, i] /= R22[j0, i]
+            end
+        end
+        @tturbo for i = iL:iR
+            for kk = 1:length(rz)
+                R33[kk, i] /= R33[k0, i]
+            end
         end
     end
     # Write velocity correlations to file
@@ -230,14 +250,18 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
         end
     end
     # Divide by number of points to get averages
-    R11 *= nPtsInv
-    R22 *= nPtsInv
-    R33 *= nPtsInv
-    dudxSquared *= nPtsInv
-    dvdySquared *= nPtsInv
-    dwdzSquared *= nPtsInv
-    omegaSquared *= nPtsInv
-    divUSquared *= nPtsInv
+    @inbounds begin
+        @tturbo for i = 1:grid.Nx
+            R11[i] *= nPtsInv
+            R22[i] *= nPtsInv
+            R33[i] *= nPtsInv
+            dudxSquared[i] *= nPtsInv
+            dvdySquared[i] *= nPtsInv
+            dwdzSquared[i] *= nPtsInv
+            omegaSquared[i] *= nPtsInv
+            divUSquared[i] *= nPtsInv
+        end
+    end
     # Calculate dissipation rates
     εx, εy, εz = calcDissipationRates(QBar, omegaSquared, divUSquared, grid.Nx)
     # Calculate Taylor microscales
@@ -265,7 +289,7 @@ function calcDissipationRates(QBar::planeAverage, omegaSquared::Array{Float64, 2
     fourNinths = 4.0 / 9.0
     # Loop over all cells
     @inbounds begin
-        @batch for i = 1:Nx
+        @tturbo for i = 1:Nx
             nuBar = QBar.muBar[i] / QBar.rhoBar[i]
             εx[i] = nuBar * (omegaSquared[i, 1] + fourNinths * divUSquared[i])
             εy[i] = nuBar * (omegaSquared[i, 2] + fourNinths * divUSquared[i])
@@ -283,7 +307,7 @@ function calcTaylorMicroscales(R11::Array{Float64, 1}, R22::Array{Float64, 1}, R
     λz = zeros(Float64, Nx)
     # Loop over all cells
     @inbounds begin
-        @batch for i = 1:Nx
+        @tturbo for i = 1:Nx
             λx[i] = sqrt(R11[i] / dudxSquared[i])
             λy[i] = sqrt(R22[i] / dvdySquared[i])
             λz[i] = sqrt(R33[i] / dwdzSquared[i])
@@ -300,10 +324,11 @@ function calcKolmogorovMicroscales(nuBar::Array{Float64, 1}, εx::Array{Float64,
     ηz = zeros(Float64, Nx)
     # Loop over all cells
     @inbounds begin
-        @batch for i = 1:Nx
-            ηx[i] = (nuBar[i] ^ 3 / εx[i]) ^ 0.25
-            ηy[i] = (nuBar[i] ^ 3 / εy[i]) ^ 0.25
-            ηz[i] = (nuBar[i] ^ 3 / εz[i]) ^ 0.25
+        @tturbo for i = 1:Nx
+            nuBarCubed = nuBar[i] ^ 3
+            ηx[i] = (nuBarCubed / εx[i]) ^ 0.25
+            ηy[i] = (nuBarCubed / εy[i]) ^ 0.25
+            ηz[i] = (nuBarCubed / εz[i]) ^ 0.25
         end
     end
     return ηx, ηy, ηz

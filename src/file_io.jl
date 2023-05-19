@@ -495,12 +495,14 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
     # Write header
     write(f1, "# x   Ex\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f1, @sprintf("%.15e", x[i]), "   ")
-        @inbounds for j = 1:N+1
-            write(f1, @sprintf("%.15e", Ex[j,i]), "   ")
+    @inbounds begin
+        for i = iL:iR
+            write(f1, @sprintf("%.15e", x[i]), "   ")
+            for j = 1:N+1
+                write(f1, @sprintf("%.15e", Ex[j,i]), "   ")
+            end
+            write(f1, "\n")
         end
-        write(f1, "\n")
     end
     # Close file
     close(f1)
@@ -512,12 +514,14 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
     # Write header
     write(f2, "# x   Ey\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f2, @sprintf("%.15e", x[i]), "   ")
-        @inbounds for j = 1:N+1
-            write(f2, @sprintf("%.15e", Ey[j,i]), "   ")
+    @inbounds begin
+        for i = iL:iR
+            write(f2, @sprintf("%.15e", x[i]), "   ")
+            for j = 1:N+1
+                write(f2, @sprintf("%.15e", Ey[j,i]), "   ")
+            end
+            write(f2, "\n")
         end
-        write(f2, "\n")
     end
     # Close file
     close(f2)
@@ -529,12 +533,14 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
     # Write header
     write(f3, "# x   Ez\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f3, @sprintf("%.15e", x[i]), "   ")
-        @inbounds for j = 1:N+1
-            write(f3, @sprintf("%.15e", Ez[j,i]), "   ")
+    @inbounds begin
+        for i = iL:iR
+            write(f3, @sprintf("%.15e", x[i]), "   ")
+            for j = 1:N+1
+                write(f3, @sprintf("%.15e", Ez[j,i]), "   ")
+            end
+            write(f3, "\n")
         end
-        write(f3, "\n")
     end
     # Close file
     close(f3)
@@ -554,8 +560,10 @@ function writeIntegralLength(t::Float64, Lyz::Array{Float64,1}, x::SubArray{Floa
     # Write header
     write(f, "# x   Lyz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", Lyz[i]), "\n")
+    @inbounds begin
+        for i = iL:iR
+            write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", Lyz[i]), "\n")
+        end
     end
     # Close file
     close(f)

@@ -2,12 +2,24 @@
 
 # Trapezoidal rule integration (x is a vector of nodes, y is a vector of values at nodes)
 function trapz(x::SubArray{Float64,1}, y::SubArray{Float64,1})
-    return @turbo sum(0.5 .* (x[2:end] .- x[1:end-1]) .* (y[2:end] .+ y[1:end-1]))
+    integral = 0.0
+    @inbounds begin
+        @turbo for i in 1:length(x)-1
+            integral += 0.5 * (x[i+1] - x[i]) * (y[i+1] + y[i])
+        end
+    end
+    return integral
 end
 
 # Midpoint rule integration (x is a vector of nodes, y is a vector of values at cell centres)
 function midpoint(x::Array{Float64,1}, y::Array{Float64,1})
-    return @turbo sum((x[2:end] .- x[1:end-1]) .* y[1:end])
+    integral = 0.0
+    @inbounds begin
+        @turbo for i in 1:length(x)-1
+            integral += (x[i+1] - x[i]) * y[i]
+        end
+    end
+    return integral
 end
 
 # Function to compute a first order derivative in the non-homogeneous direction
@@ -42,18 +54,14 @@ end
 function interp1D(x0::Float64, x::PtrArray{Float32,1}, U::PtrArray{Float32,1}, UBar::Array{Float64,1})
     # Find the cell containing x0
     i = searchsortedfirst(x, x0) - 1
-    if (x[i] <= x0)
-        # Grid spacings
-        ΔxC = x[i+1] - x[i]
-        ΔxL = x[i] - x[i-1]
-        ΔxR = x[i+2] - x[i+1]
-        # Get values at node i
-        Um = ((U[i-1] - UBar[i-1]) * ΔxL + (U[i] - UBar[i]) * ΔxC) / (ΔxL + ΔxC)
-        # Get values at node i+1
-        Up = ((U[i] - UBar[i]) * ΔxC + (U[i+1] - UBar[i+1]) * ΔxR) / (ΔxC + ΔxR)
-    else
-        error("x0 < x[i]")
-    end
+    # Grid spacings
+    ΔxC = x[i+1] - x[i]
+    ΔxL = x[i] - x[i-1]
+    ΔxR = x[i+2] - x[i+1]
+    # Get values at node i
+    Um = ((U[i-1] - UBar[i-1]) * ΔxL + (U[i] - UBar[i]) * ΔxC) / (ΔxL + ΔxC)
+    # Get values at node i+1
+    Up = ((U[i] - UBar[i]) * ΔxC + (U[i+1] - UBar[i+1]) * ΔxR) / (ΔxC + ΔxR)
     # Interpolate
     return Up + (Up - Um) * (x0 - x[i]) / ΔxC
 end

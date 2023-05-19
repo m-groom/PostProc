@@ -43,31 +43,33 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
     # Get fluctuating velocity components
-    @inbounds for i = iL:iR
-        @inbounds for k = 1:grid.Nz
-            @inbounds for j = 1:grid.Ny
-                uPrime[j, k] = Q[i, j, k, 1] - QBar.UBar[i]
-                vPrime[j, k] = Q[i, j, k, 2] - QBar.VBar[i]
-                wPrime[j, k] = Q[i, j, k, 3] - QBar.WBar[i]
+    @inbounds begin
+        @batch for i = iL:iR
+            @turbo for k = 1:grid.Nz
+                for j = 1:grid.Ny
+                    uPrime[j, k] = Q[i, j, k, 1] - QBar.UBar[i]
+                    vPrime[j, k] = Q[i, j, k, 2] - QBar.VBar[i]
+                    wPrime[j, k] = Q[i, j, k, 3] - QBar.WBar[i]
+                end
             end
-        end
-        # 2D FFT to get power spectral density
-        uHat = FFTW.fftshift(FFTW.fft(uPrime))
-        vHat = FFTW.fftshift(FFTW.fft(vPrime))
-        wHat = FFTW.fftshift(FFTW.fft(wPrime))
-        E2Dx = real.(uHat .* conj(uHat))
-        E2Dy = real.(vHat .* conj(vHat))
-        E2Dz = real.(wHat .* conj(wHat))
-        # Calculate energy spectra
-        @inbounds for n in eachindex(κz)
-            @inbounds for m in eachindex(κy)
-                κ = sqrt(κy[m]^2 + κz[n]^2)
-                @inbounds for p in eachindex(κ1D)
-                    κp = p * Δκ
-                    if (κp - Δκ / 2 <= κ && κ < κp + Δκ / 2)
-                        E1Dx[p+1, i] += E2Dx[m, n] * constant
-                        E1Dy[p+1, i] += E2Dy[m, n] * constant
-                        E1Dz[p+1, i] += E2Dz[m, n] * constant
+            # 2D FFT to get power spectral density
+            uHat = FFTW.fftshift(FFTW.fft(uPrime))
+            vHat = FFTW.fftshift(FFTW.fft(vPrime))
+            wHat = FFTW.fftshift(FFTW.fft(wPrime))
+            E2Dx = real.(uHat .* conj(uHat))
+            E2Dy = real.(vHat .* conj(vHat))
+            E2Dz = real.(wHat .* conj(wHat))
+            # Calculate energy spectra
+            for n in eachindex(κz)
+                for m in eachindex(κy)
+                    κ = sqrt(κy[m]^2 + κz[n]^2)
+                    @simd for p in eachindex(κ1D)
+                        κp = p * Δκ
+                        if (κp - Δκ / 2 <= κ && κ < κp + Δκ / 2)
+                            E1Dx[p+1, i] += E2Dx[m, n] * constant
+                            E1Dy[p+1, i] += E2Dy[m, n] * constant
+                            E1Dz[p+1, i] += E2Dz[m, n] * constant
+                        end
                     end
                 end
             end
@@ -76,7 +78,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
     # Write energy spectra to file
     writeEnergySpectra(t, κ1D, E1Dx, E1Dy, E1Dz, x, grid, dataDir)
     # Calculate total energy in yz direction
-    E1Dyz = E1Dy .+ E1Dz
+    E1Dyz = @turbo E1Dy .+ E1Dz
     
     return E1Dyz, κ1D
 
@@ -98,10 +100,14 @@ function calcIntegralLength(κ::Array{Float64,1}, Eyz::Array{Float64,2}, x::SubA
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
+    # Store 3π/4 as a constant
+    threePiOnFour = 3.0 * π / 4.0
     # Loop over x
-    @inbounds for i = iL:iR
-        # Calculate integral length in yz plane
-        Lyz[i] = (3.0 * π / 4) * integrateEonK(@view(Eyz[:, i]), κ, Δκ, N) / integrate(@view(Eyz[:, i]), Δκ, N)
+    @inbounds begin
+        @batch for i = iL:iR
+            # Calculate integral length in yz plane
+            Lyz[i] = threePiOnFour * integrateEonK(@view(Eyz[:, i]), κ, Δκ, N) / integrate(@view(Eyz[:, i]), Δκ, N)
+        end
     end
     # Write integral length to file
     writeIntegralLength(t, Lyz, x, dataDir)
