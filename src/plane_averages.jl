@@ -45,13 +45,17 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
         end
     end
     # Divide by number of points to get averages
-    rhoBar *= nPtsInv
-    UBar *= nPtsInv
-    Y1Bar *= nPtsInv
-    Z1Bar *= nPtsInv
-    Z1Z2Bar *= nPtsInv
-    muBar *= nPtsInv
-    nuBar *= nPtsInv
+    @inbounds begin
+        @tturbo for i = 1:Nx
+            rhoBar[i] *= nPtsInv
+            UBar[i] *= nPtsInv
+            Y1Bar[i] *= nPtsInv
+            Z1Bar[i] *= nPtsInv
+            Z1Z2Bar[i] *= nPtsInv
+            muBar[i] *= nPtsInv
+            nuBar[i] *= nPtsInv
+        end
+    end
     # Package into a struct
     QBar = planeAverage(x, rhoBar, UBar, VBar, WBar, Y1Bar, Z1Bar, Z1Z2Bar, muBar, nuBar)
     # Reporting 
