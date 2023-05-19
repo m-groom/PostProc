@@ -22,9 +22,9 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
     nPtsInv = 1.0 / (Ny * Nz)
     # Loop over all cells
     @inbounds begin
-        @batch for k = 1:Nz
+        for k = 1:Nz
             for j = 1:Ny
-                for i = 1:Nx
+                @simd for i = 1:Nx
                     rhoBar[i] += Q[i, j, k, nVars-3]
                     UBar[i] += Q[i, j, k, 1]
                     if (nVars >= 10)
@@ -46,7 +46,7 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
     end
     # Divide by number of points to get averages
     @inbounds begin
-        @tturbo for i = 1:Nx
+        @turbo for i = 1:Nx
             rhoBar[i] *= nPtsInv
             UBar[i] *= nPtsInv
             Y1Bar[i] *= nPtsInv
@@ -70,9 +70,9 @@ function convertSolution!(Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, 
     tStart = report("Converting to primitive variables", 1)
     # Loop over all cells
     @inbounds begin
-        @batch for k = 1:Nz
+        for k = 1:Nz
             for j = 1:Ny
-                for i = 1:Nx
+                @simd for i = 1:Nx
                     rhoInv = 1.0 / Q[i, j, k, nVars-3]
                     Q[i, j, k, 1] *= rhoInv
                     Q[i, j, k, 2] *= rhoInv
@@ -91,7 +91,7 @@ function convertSolution!(Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, 
 end
 
 # Function to calculate volume fraction from mass fraction (note: assumes species 1)
-function volumeFraction(Y1::Float32, R::PtrArray{Float64,1})
+function volumeFraction(Y1::Float32, R::Array{Float64,1})
     # Calculate denominator
     sumRY = R[1] * Y1 + R[2] * (1.0 - Y1)
     # Calculate volume fraction
