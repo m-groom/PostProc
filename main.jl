@@ -52,7 +52,7 @@ for n = 1:input.nFiles
 
     # Write plane averages
     writePlaneAverages(t, QBar, grid, dataDir)
-
+    
     # Calculate integral quantities
     calcIntegralQuantities(t, @view(x[:, 1, 1]), @view(y[1, :, 1]), @view(z[1, 1, :]), Q, QBar, grid, dataDir)
 

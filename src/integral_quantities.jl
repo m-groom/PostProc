@@ -4,9 +4,10 @@
 function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
-    R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
+    @time R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
+    exit()
     # Calculate correlation lengths
     tStart = report("Calculating correlation lengths", 1)
     calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
@@ -36,15 +37,15 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     nPtsInv = 1.0 / (grid.Ny * grid.Nz)
     # Loop over all cells
     @inbounds begin
-        @batch for k = 1:grid.Nz
-            for j = 1:grid.Ny
-                for i = iL:iR
+        @batch for i = iL:iR
+            for k = 1:grid.Nz
+                for j = 1:grid.Ny
                     # Calculate fluctuating velocities at (i,j,k)
                     Ua = Q[i, j, k, 1] - QBar.UBar[i]
                     Va = Q[i, j, k, 2] - QBar.VBar[i]
                     Wa = Q[i, j, k, 3] - QBar.WBar[i]
                     # Calculate correlations in the x direction
-                    @simd for ii in eachindex(rx)
+                    for ii in eachindex(rx)
                         # Get index of point to calculate flucuation at
                         xp = x[i] + rx[ii]
                         # Interpolate velocity at xp
@@ -53,7 +54,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                         R11[ii, i] += Ua * Ub
                     end
                     # Calculate correlations in the y direction
-                    @simd for jj in eachindex(ry)
+                    for jj in eachindex(ry)
                         # Get index of point to calculate flucuation at
                         idx = Int(j + jj - grid.Ny / 2)
                         # Restrict y to be within 0 and 2π
@@ -68,7 +69,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                         R22[jj, i] += Va * Vb
                     end
                     # Calculate correlations in the z direction
-                    @simd for kk in eachindex(rz)
+                    for kk in eachindex(rz)
                         # Get index of point to calculate flucuation at
                         idx = Int(k + kk - grid.Nz / 2)
                         # Restrict z to be within 0 and 2π
