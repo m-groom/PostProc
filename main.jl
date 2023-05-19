@@ -55,7 +55,7 @@ for n = 1:input.nFiles
 
     # Calculate integral quantities
     calcIntegralQuantities(t, @view(x[:, 1, 1]), @view(y[1, :, 1]), @view(z[1, 1, :]), Q, QBar, grid, dataDir)
-    
+
     # Calculate spectral quantities
     calcSpectralQuantities(t, @view(x[:, 1, 1]), Q, QBar, grid, dataDir)
 end

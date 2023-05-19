@@ -79,7 +79,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
     writeEnergySpectra(t, κ1D, E1Dx, E1Dy, E1Dz, x, grid, dataDir)
     # Calculate total energy in yz direction
     E1Dyz = @turbo E1Dy .+ E1Dz
-    
+
     return E1Dyz, κ1D
 
 end
@@ -93,7 +93,7 @@ function calcIntegralLength(κ::Array{Float64,1}, Eyz::Array{Float64,2}, x::SubA
     Δκz = 2.0 * π / Lz
     Δκ = max(Δκy, Δκz)
     # Nyquist wavenumber
-    N = Int(max(grid.Ny / 2, grid.Nz / 2)) 
+    N = Int(max(grid.Ny / 2, grid.Nz / 2))
     # Initialise arrays
     Lyz = zeros(Float64, grid.Nx)
     # Find index where x = xL

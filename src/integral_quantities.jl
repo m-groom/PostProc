@@ -280,7 +280,7 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
 end
 
 # Function to calculate dissipation rates
-function calcDissipationRates(QBar::planeAverage, omegaSquared::Array{Float64, 2}, divUSquared::Array{Float64, 1}, Nx::Int64)
+function calcDissipationRates(QBar::planeAverage, omegaSquared::Array{Float64,2}, divUSquared::Array{Float64,1}, Nx::Int64)
     # Initialise arrays
     εx = zeros(Float64, Nx)
     εy = zeros(Float64, Nx)
@@ -300,7 +300,7 @@ function calcDissipationRates(QBar::planeAverage, omegaSquared::Array{Float64, 2
 end
 
 # Function to calculate Taylor microscales
-function calcTaylorMicroscales(R11::Array{Float64, 1}, R22::Array{Float64, 1}, R33::Array{Float64, 1}, dudxSquared::Array{Float64, 1}, dvdySquared::Array{Float64, 1}, dwdzSquared::Array{Float64, 1}, Nx::Int64)
+function calcTaylorMicroscales(R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, dudxSquared::Array{Float64,1}, dvdySquared::Array{Float64,1}, dwdzSquared::Array{Float64,1}, Nx::Int64)
     # Initialise arrays
     λx = zeros(Float64, Nx)
     λy = zeros(Float64, Nx)
@@ -317,7 +317,7 @@ function calcTaylorMicroscales(R11::Array{Float64, 1}, R22::Array{Float64, 1}, R
 end
 
 # Function to calculate Kolmogorov microscales
-function calcKolmogorovMicroscales(nuBar::Array{Float64, 1}, εx::Array{Float64, 1}, εy::Array{Float64, 1}, εz::Array{Float64, 1}, Nx::Int64)
+function calcKolmogorovMicroscales(nuBar::Array{Float64,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, Nx::Int64)
     # Initialise arrays
     ηx = zeros(Float64, Nx)
     ηy = zeros(Float64, Nx)
@@ -325,10 +325,10 @@ function calcKolmogorovMicroscales(nuBar::Array{Float64, 1}, εx::Array{Float64,
     # Loop over all cells
     @inbounds begin
         @tturbo for i = 1:Nx
-            nuBarCubed = nuBar[i] ^ 3
-            ηx[i] = (nuBarCubed / εx[i]) ^ 0.25
-            ηy[i] = (nuBarCubed / εy[i]) ^ 0.25
-            ηz[i] = (nuBarCubed / εz[i]) ^ 0.25
+            nuBarCubed = nuBar[i]^3
+            ηx[i] = (nuBarCubed / εx[i])^0.25
+            ηy[i] = (nuBarCubed / εy[i])^0.25
+            ηz[i] = (nuBarCubed / εz[i])^0.25
         end
     end
     return ηx, ηy, ηz

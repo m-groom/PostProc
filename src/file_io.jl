@@ -499,7 +499,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
         for i = iL:iR
             write(f1, @sprintf("%.15e", x[i]), "   ")
             for j = 1:N+1
-                write(f1, @sprintf("%.15e", Ex[j,i]), "   ")
+                write(f1, @sprintf("%.15e", Ex[j, i]), "   ")
             end
             write(f1, "\n")
         end
@@ -518,7 +518,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
         for i = iL:iR
             write(f2, @sprintf("%.15e", x[i]), "   ")
             for j = 1:N+1
-                write(f2, @sprintf("%.15e", Ey[j,i]), "   ")
+                write(f2, @sprintf("%.15e", Ey[j, i]), "   ")
             end
             write(f2, "\n")
         end
@@ -537,7 +537,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
         for i = iL:iR
             write(f3, @sprintf("%.15e", x[i]), "   ")
             for j = 1:N+1
-                write(f3, @sprintf("%.15e", Ez[j,i]), "   ")
+                write(f3, @sprintf("%.15e", Ez[j, i]), "   ")
             end
             write(f3, "\n")
         end
