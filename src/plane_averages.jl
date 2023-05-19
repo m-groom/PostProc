@@ -22,7 +22,7 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
     nPtsInv = 1.0 / (Ny * Nz)
     # Loop over all cells
     @inbounds begin
-        for k = 1:Nz
+        @batch for k = 1:Nz
             for j = 1:Ny
                 @simd for i = 1:Nx
                     rhoBar[i] += Q[i, j, k, nVars-3]
