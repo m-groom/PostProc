@@ -163,7 +163,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, dataD
     # Read grid file
     tStart = report("Reading grid files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
     @inbounds begin
-        for n = 1:NPR
+        @threads for n = 1:NPR
             # Generate filename
             proc = string(n - 1)
             filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).g"
@@ -216,7 +216,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
     # Read solution file
     tStart = report("Reading solution files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
     @inbounds begin
-        for n = 1:NPR
+        @threads for n = 1:NPR
             # Generate filename
             proc = string(n - 1)
             filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).all.f"
