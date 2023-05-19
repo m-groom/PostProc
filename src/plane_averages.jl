@@ -46,7 +46,7 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
     end
     # Divide by number of points to get averages
     @inbounds begin
-        @turbo for i = 1:Nx
+        for i = 1:Nx
             rhoBar[i] *= nPtsInv
             UBar[i] *= nPtsInv
             Y1Bar[i] *= nPtsInv
