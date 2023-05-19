@@ -4,18 +4,18 @@
 function calcSpectralQuantities(t::Float64, x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate radial power spectra
     tStart = report("Calculating radial power spectra", 1)
-    Eyz, κ = calcPowerSpectra(x, Q, QBar, grid)
+    Eyz, κ = calcPowerSpectra(x, Q, QBar, grid, t, dataDir)
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate integral length
     tStart = report("Calculating integral length", 1)
-    calcIntegralLength(κ, Eyz, x, grid)
+    calcIntegralLength(κ, Eyz, x, grid, t, dataDir)
     tEnd = report("Finished calculating integral length...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
 
 # Function to calculate radial power spectra at x = x0 for each velocity component
-function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid)
+function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, t::Float64, dataDir::String)
     # Get wavenumbers and spacing
     κy = collect(FFTW.fftshift(FFTW.fftfreq(grid.Ny, grid.Ny)))
     κz = collect(FFTW.fftshift(FFTW.fftfreq(grid.Nz, grid.Nz)))
@@ -85,7 +85,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
 end
 
 # Function to calculate integral length
-function calcIntegralLength(κ::Array{Float64,1}, Eyz::Array{Float64,2}, x::SubArray{Float32,1}, grid::rectilinearGrid)
+function calcIntegralLength(κ::Array{Float64,1}, Eyz::Array{Float64,2}, x::SubArray{Float32,1}, grid::rectilinearGrid, t::Float64, dataDir::String)
     # Calculate spacing in κ
     Ly = grid.yR - grid.yL
     Lz = grid.zR - grid.zL
