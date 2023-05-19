@@ -7,6 +7,10 @@ import Dates
 import WriteVTK
 import FFTW
 using Printf
+using Base.Threads: @threads
+using Polyester: @batch
+using StrideArrays: PtrArray
+using LoopVectorization: @turbo, @tturbo
 # Load functions
 include("src/structs.jl")
 include("src/file_io.jl")
@@ -24,8 +28,7 @@ const grid, input, thermo, x0, dataDir = readSettings("post.par")
 t = 0.0
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
-const x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
-
+const x, y, z = @time readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
 # Loop over all time steps
 for n = 1:input.nFiles
     # Get time step

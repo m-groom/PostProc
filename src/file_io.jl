@@ -70,25 +70,21 @@ function writeSolution(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
         # Write solution to a .vtr file
         filename = "$(dataDir)/solution_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
-        @inbounds WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
-            vtk["VelocityX", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 1])
-            vtk["VelocityY", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 2])
-            vtk["VelocityZ", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 3])
-            vtk["EnergyDensity", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 4])
-            if (iNVars >= 10)
-                @inbounds for v = 1:2
-                    vtk["MassFraction$(v)", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 4+v])
+        @inbounds begin
+            WriteVTK.vtk_grid(filename, x[:, 1, 1], y[1, :, 1], z[1, 1, :]) do vtk
+                vtk["VelocityX", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 1])
+                vtk["VelocityY", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 2])
+                vtk["VelocityZ", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 3])
+                if (iNVars >= 10)
+                    vtk["MassFraction1", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 5])
                 end
-            end
-            if (iNVars == 12)
-                @inbounds for v = 1:2
-                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 6+v])
+                if (iNVars == 12)
+                    vtk["VolumeFraction1", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, 7])
                 end
+                vtk["Density", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-3])
+                vtk["Pressure", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-1])
+                vtk["Temperature", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars])
             end
-            vtk["Density", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-3])
-            vtk["Gamma", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-2])
-            vtk["Pressure", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars-1])
-            vtk["Temperature", WriteVTK.VTKCellData()] = @view(Q[1:end-1, 1:end-1, 1:end-1, iNVars])
         end
     else
         error("Number of variables must be 8, 10 or 12")
@@ -103,7 +99,7 @@ function writeSlice(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, 
     y0 = (y[1, end, 1] + y[1, 1, 1]) * 0.5
     z0 = (z[1, 1, end] + z[1, 1, 1]) * 0.5
     # Find index of x0, y0 and z0
-    iX0 = searchsortedfirst(x[:, 1, 1], x0) - 1
+    iX0 = searchsortedfirst(x[:, 1, 1], x0)
     iY0 = searchsortedfirst(y[1, :, 1], y0)
     iZ0 = searchsortedfirst(z[1, 1, :], z0)
     # Get slice from the solution Q
@@ -125,27 +121,23 @@ function writeSlice(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, 
     tStart = report("Writing $(slice) slice at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
-        # Write slice to a .vtr file
+        # Write slice to a .vtr file  
         filename = "$(dataDir)/slice$(uppercase(slice))_$(rpad(string(round(t, digits=5)), 7, "0")).vtr"
-        @inbounds WriteVTK.vtk_grid(filename, x1, x2) do vtk
-            vtk["VelocityX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
-            vtk["VelocityY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
-            vtk["VelocityZ", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 3]
-            vtk["EnergyDensity", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4]
-            if (iNVars >= 10)
-                @inbounds for v = 1:2
-                    vtk["MassFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 4+v]
+        @inbounds begin
+            WriteVTK.vtk_grid(filename, x1, x2) do vtk
+                vtk["VelocityX", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 1]
+                vtk["VelocityY", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 2]
+                vtk["VelocityZ", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 3]
+                if (iNVars >= 10)
+                    vtk["MassFraction1", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 5]
                 end
-            end
-            if (iNVars == 12)
-                @inbounds for v = 1:2
-                    vtk["VolumeFraction$(v)", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 6+v]
+                if (iNVars == 12)
+                    vtk["VolumeFraction1", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, 7]
                 end
+                vtk["Density", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-3]
+                vtk["Pressure", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-1]
+                vtk["Temperature", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars]
             end
-            vtk["Density", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-3]
-            vtk["Gamma", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-2]
-            vtk["Pressure", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars-1]
-            vtk["Temperature", WriteVTK.VTKCellData()] = Qs[1:end-1, 1:end-1, iNVars]
         end
     else
         error("Number of variables must be 8, 10 or 12")
@@ -170,29 +162,31 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, dataD
     data = zeros(Float32, iNX, iNY, iNZ, 3)
     # Read grid file
     tStart = report("Reading grid files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
-    @inbounds for n = 1:NPR
-        # Generate filename
-        proc = string(n - 1)
-        filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).g"
-        # Get extents for this processor
-        iStart = Int32(extents[1, 1, n])
-        iEnd = Int32(extents[1, 2, n] - 2)
-        jStart = Int32(extents[2, 1, n])
-        jEnd = Int32(extents[2, 2, n] - 2)
-        kStart = Int32(extents[3, 1, n])
-        kEnd = Int32(extents[3, 2, n] - 2)
-        # Open file
-        report("Reading grid file for processor $(proc)")
-        f = FFile.FortranFile(filename, "r")
-        blocks = read(f, Int32)
-        ie, je, ke = read(f, (Int32, 3))
-        # Check that ie, je, ke match
-        if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
-            error("Grid sizes from $(filename) do not match those in $(dataDir)/prempi.dat")
+    @inbounds begin
+        @threads for n = 1:NPR
+            # Generate filename
+            proc = string(n - 1)
+            filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).g"
+            # Get extents for this processor
+            iStart = Int32(extents[1, 1, n])
+            iEnd = Int32(extents[1, 2, n] - 2)
+            jStart = Int32(extents[2, 1, n])
+            jEnd = Int32(extents[2, 2, n] - 2)
+            kStart = Int32(extents[3, 1, n])
+            kEnd = Int32(extents[3, 2, n] - 2)
+            # Open file
+            report("Reading grid file for processor $(proc)")
+            f = FFile.FortranFile(filename, "r")
+            blocks = read(f, Int32)
+            ie, je, ke = read(f, (Int32, 3))
+            # Check that ie, je, ke match
+            if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
+                error("Grid sizes from $(filename) do not match those in $(dataDir)/prempi.dat")
+            end
+            data[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, 3)))
+            # Close file
+            close(f)
         end
-        data[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, 3)))
-        # Close file
-        close(f)
     end
     tEnd = report("Finished reading grid files...", 1)
     report("Elapsed time: $(tEnd - tStart)")
@@ -221,29 +215,31 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
     Q = zeros(Float32, iNX, iNY, iNZ, nVars)
     # Read solution file
     tStart = report("Reading solution files for $(NPR) processors located in $(dataDir)/out_$(timeStep)", 1)
-    @inbounds for n = 1:NPR
-        # Generate filename
-        proc = string(n - 1)
-        filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).all.f"
-        # Get extents for this processor
-        iStart = Int32(extents[1, 1, n])
-        iEnd = Int32(extents[1, 2, n] - 2)
-        jStart = Int32(extents[2, 1, n])
-        jEnd = Int32(extents[2, 2, n] - 2)
-        kStart = Int32(extents[3, 1, n])
-        kEnd = Int32(extents[3, 2, n] - 2)
-        # Open file
-        report("Reading solution file for processor $(proc)")
-        f = FFile.FortranFile(filename, "r")
-        blocks = read(f, Int32)
-        ie, je, ke = read(f, (Int32, 3))
-        # Check that ie, je, ke match
-        if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
-            error("Grid sizes from $(filename) do not match those in $(dataDir)/prempi.dat")
+    @inbounds begin
+        @threads for n = 1:NPR
+            # Generate filename
+            proc = string(n - 1)
+            filename = "$(dataDir)/out_$(timeStep)/$(timeStep).$(proc).all.f"
+            # Get extents for this processor
+            iStart = Int32(extents[1, 1, n])
+            iEnd = Int32(extents[1, 2, n] - 2)
+            jStart = Int32(extents[2, 1, n])
+            jEnd = Int32(extents[2, 2, n] - 2)
+            kStart = Int32(extents[3, 1, n])
+            kEnd = Int32(extents[3, 2, n] - 2)
+            # Open file
+            report("Reading solution file for processor $(proc)")
+            f = FFile.FortranFile(filename, "r")
+            blocks = read(f, Int32)
+            ie, je, ke = read(f, (Int32, 3))
+            # Check that ie, je, ke match
+            if (ie != iEnd - iStart + 1) || (je != jEnd - jStart + 1) || (ke != kEnd - kStart + 1)
+                error("Grid sizes from $(filename) do not match those in $(dataDir)/prempi.dat")
+            end
+            Q[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, nVars)))
+            # Close file
+            close(f)
         end
-        Q[iStart:iEnd, jStart:jEnd, kStart:kEnd, :] = read(f, (Float32, (ie, je, ke, nVars)))
-        # Close file
-        close(f)
     end
     tEnd = report("Finished reading solution files...", 1)
     report("Elapsed time: $(tEnd - tStart)")
@@ -259,15 +255,17 @@ function readPrempi(filename::String)
     # Read number of processors
     NPR = parse(Int, readline(file))
     extents = Int.(zeros(3, 2, NPR))
-    @inbounds for n = 1:NPR
-        # Read processor number
-        proc = parse(Int, readline(file))
-        # Read k extents
-        extents[3, :, proc+1] = parse.(Int, split(readline(file)))
-        # Read j extents
-        extents[2, :, proc+1] = parse.(Int, split(readline(file)))
-        # Read i extents
-        extents[1, :, proc+1] = parse.(Int, split(readline(file)))
+    @inbounds begin
+        for n = 1:NPR
+            # Read processor number
+            proc = parse(Int, readline(file))
+            # Read k extents
+            extents[3, :, proc+1] = parse.(Int, split(readline(file)))
+            # Read j extents
+            extents[2, :, proc+1] = parse.(Int, split(readline(file)))
+            # Read i extents
+            extents[1, :, proc+1] = parse.(Int, split(readline(file)))
+        end
     end
     # Close file
     close(file)
@@ -290,8 +288,10 @@ function writePlaneAverages(t::Float64, QBar::planeAverage, grid::rectilinearGri
     # Write header
     write(f, "# x   rhoBar   UBar   Y1Bar   Z1Bar   Z1Z2Bar\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", QBar.x[i]), "   ", @sprintf("%.15e", QBar.rhoBar[i]), "   ", @sprintf("%.15e", QBar.UBar[i]), "   ", @sprintf("%.15e", QBar.Y1Bar[i]), "   ", @sprintf("%.15e", QBar.Z1Bar[i]), "   ", @sprintf("%.15e", QBar.Z1Z2Bar[i]), "\n")
+    @inbounds begin
+        for i = iL:iR
+            write(f, @sprintf("%.15e", QBar.x[i]), "   ", @sprintf("%.15e", QBar.rhoBar[i]), "   ", @sprintf("%.15e", QBar.UBar[i]), "   ", @sprintf("%.15e", QBar.Y1Bar[i]), "   ", @sprintf("%.15e", QBar.Z1Bar[i]), "   ", @sprintf("%.15e", QBar.Z1Z2Bar[i]), "\n")
+        end
     end
     # Close file
     close(f)
@@ -313,12 +313,14 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     # Write header
     write(f1, "# x   R11\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f1, @sprintf("%.15e", x[i]), "   ")
-        @inbounds for j = 1:size(R11, 1)
-            write(f1, @sprintf("%.15e", R11[j, i]), "   ")
+    @inbounds begin
+        for i = iL:iR
+            write(f1, @sprintf("%.15e", x[i]), "   ")
+            for j = 1:size(R11, 1)
+                write(f1, @sprintf("%.15e", R11[j, i]), "   ")
+            end
+            write(f1, "\n")
         end
-        write(f1, "\n")
     end
     # Close file
     close(f1)
@@ -330,12 +332,14 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     # Write header
     write(f2, "# x   R22\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f2, @sprintf("%.15e", x[i]), "   ")
-        @inbounds for j = 1:size(R22, 1)
-            write(f2, @sprintf("%.15e", R22[j, i]), "   ")
+    @inbounds begin
+        for i = iL:iR
+            write(f2, @sprintf("%.15e", x[i]), "   ")
+            for j = 1:size(R22, 1)
+                write(f2, @sprintf("%.15e", R22[j, i]), "   ")
+            end
+            write(f2, "\n")
         end
-        write(f2, "\n")
     end
     # Close file
     close(f2)
@@ -347,12 +351,14 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
     # Write header
     write(f3, "# x   R33\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f3, @sprintf("%.15e", x[i]), "   ")
-        @inbounds for j = 1:size(R33, 1)
-            write(f3, @sprintf("%.15e", R33[j, i]), "   ")
+    @inbounds begin
+        for i = iL:iR
+            write(f3, @sprintf("%.15e", x[i]), "   ")
+            for j = 1:size(R33, 1)
+                write(f3, @sprintf("%.15e", R33[j, i]), "   ")
+            end
+            write(f3, "\n")
         end
-        write(f3, "\n")
     end
     # Close file
     close(f3)
@@ -372,8 +378,10 @@ function writeCorrelationLengths(t::Float64, x::SubArray{Float32,1}, Λx::Array{
     # Write header
     write(f, "# x   Lambdax   Lambday   Lambdaz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", Λx[i]), "   ", @sprintf("%.15e", Λy[i]), "   ", @sprintf("%.15e", Λz[i]), "\n")
+    @inbounds begin
+        for i = iL:iR
+            write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", Λx[i]), "   ", @sprintf("%.15e", Λy[i]), "   ", @sprintf("%.15e", Λz[i]), "\n")
+        end
     end
     # Close file
     close(f)
@@ -393,8 +401,10 @@ function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Fl
     # Write header
     write(f, "# x   R11   R22   R33\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", R11[i]), "   ", @sprintf("%.15e", R22[i]), "   ", @sprintf("%.15e", R33[i]), "\n")
+    @inbounds begin
+        for i = iL:iR
+            write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", R11[i]), "   ", @sprintf("%.15e", R22[i]), "   ", @sprintf("%.15e", R33[i]), "\n")
+        end
     end
     # Close file
     close(f)
@@ -414,8 +424,10 @@ function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Fl
     # Write header
     write(f, "# x   epsilonx   epsilony   epsilonz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", εx[i]), "   ", @sprintf("%.15e", εy[i]), "   ", @sprintf("%.15e", εz[i]), "\n")
+    @inbounds begin
+        for i = iL:iR
+            write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", εx[i]), "   ", @sprintf("%.15e", εy[i]), "   ", @sprintf("%.15e", εz[i]), "\n")
+        end
     end
     # Close file
     close(f)
@@ -435,8 +447,10 @@ function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{F
     # Write header
     write(f, "# x   lambdax   lambday   lambday\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", λx[i]), "   ", @sprintf("%.15e", λy[i]), "   ", @sprintf("%.15e", λz[i]), "\n")
+    @inbounds begin
+        for i = iL:iR
+            write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", λx[i]), "   ", @sprintf("%.15e", λy[i]), "   ", @sprintf("%.15e", λz[i]), "\n")
+        end
     end
     # Close file
     close(f)
@@ -456,8 +470,10 @@ function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Arr
     # Write header
     write(f, "# x   etax   etay   etaz\n")
     # Write data in scientific format with 15 digits
-    @inbounds for i = iL:iR
-        write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", ηx[i]), "   ", @sprintf("%.15e", ηy[i]), "   ", @sprintf("%.15e", ηz[i]), "\n")
+    @inbounds begin
+        for i = iL:iR
+            write(f, @sprintf("%.15e", x[i]), "   ", @sprintf("%.15e", ηx[i]), "   ", @sprintf("%.15e", ηy[i]), "   ", @sprintf("%.15e", ηz[i]), "\n")
+        end
     end
     # Close file
     close(f)

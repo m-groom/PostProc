@@ -2,16 +2,16 @@
 
 # Trapezoidal rule integration (x is a vector of nodes, y is a vector of values at nodes)
 function trapz(x::SubArray{Float64,1}, y::SubArray{Float64,1})
-    return sum(0.5 .* (x[2:end] .- x[1:end-1]) .* (y[2:end] .+ y[1:end-1]))
+    return @turbo sum(0.5 .* (x[2:end] .- x[1:end-1]) .* (y[2:end] .+ y[1:end-1]))
 end
 
 # Midpoint rule integration (x is a vector of nodes, y is a vector of values at cell centres)
 function midpoint(x::Array{Float64,1}, y::Array{Float64,1})
-    return sum((x[2:end] .- x[1:end-1]) .* y[1:end])
+    return @turbo sum((x[2:end] .- x[1:end-1]) .* y[1:end])
 end
 
 # Function to compute a first order derivative in the non-homogeneous direction
-function dUdX(x::SubArray{Float32,1}, U::SubArray{Float32,1}, i::Int64)
+function dUdX(x::PtrArray{Float32,1}, U::PtrArray{Float32,1}, i::Int64)
     # Get number of cells
     N = length(x) - 1
     # Check if we are at the first or last cell
@@ -25,7 +25,7 @@ function dUdX(x::SubArray{Float32,1}, U::SubArray{Float32,1}, i::Int64)
 end
 
 # Function to compute a first order derivative in the homogeneous direction
-function dUdY(y::SubArray{Float32,1}, U::SubArray{Float32,1}, j::Int64)
+function dUdY(y::PtrArray{Float32,1}, U::PtrArray{Float32,1}, j::Int64)
     # Get number of cells
     N = length(y) - 1
     # Check if we are at the first or last cell
@@ -39,7 +39,7 @@ function dUdY(y::SubArray{Float32,1}, U::SubArray{Float32,1}, j::Int64)
 end
 
 # Function to interpolate the x velocity at a given point
-function interp1D(x0::Float64, x::SubArray{Float32,1}, U::SubArray{Float32,1}, UBar::Array{Float64,1})
+function interp1D(x0::Float64, x::PtrArray{Float32,1}, U::PtrArray{Float32,1}, UBar::Array{Float64,1})
     # Find the cell containing x0
     i = searchsortedfirst(x, x0) - 1
     if (x[i] <= x0)
