@@ -4,7 +4,7 @@
 function trapz(x::SubArray{Float64,1}, y::SubArray{Float64,1})
     integral = 0.0
     @inbounds begin
-        @turbo for i in 1:length(x)-1
+        @simd for i in firstindex(x):lastindex(x)-1
             integral += 0.5 * (x[i+1] - x[i]) * (y[i+1] + y[i])
         end
     end
@@ -15,7 +15,7 @@ end
 function midpoint(x::Array{Float64,1}, y::Array{Float64,1})
     integral = 0.0
     @inbounds begin
-        @turbo for i in 1:length(x)-1
+        @simd for i in firstindex(x):lastindex(x)-1
             integral += (x[i+1] - x[i]) * y[i]
         end
     end

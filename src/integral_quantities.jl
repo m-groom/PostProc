@@ -4,10 +4,9 @@
 function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
-    @time R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
+    R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
     tEnd = report("Finished calculating velocity correlation tensor...", 1)
     report("Elapsed time: $(tEnd - tStart)")
-    exit()
     # Calculate correlation lengths
     tStart = report("Calculating correlation lengths", 1)
     calcCorrelationLengths(R11, R22, R33, x, y, z, grid)
@@ -27,41 +26,55 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
     # Get separation directions
-    rx = @turbo x[iL:iR] .- 0.5 .* x[iR]
-    ry = @turbo y .- 0.5 .* y[end]
-    rz = @turbo z .- 0.5 .* z[end]
+    rx = @view(x[iL:iR]) .- 0.5 .* x[iR]
+    Nx = length(rx) - 1
+    ry = y .- 0.5 .* y[end]
+    rz = z .- 0.5 .* z[end]
+    # Location of r=0
+    i0 = Int(ceil(length(rx) / 2))
+    j0 = Int(ceil(length(ry) / 2))
+    k0 = Int(ceil(length(rz) / 2))
     # Initialise arrays
     R11 = zeros(Float64, length(rx), grid.Nx) # <u'(x)u'(x+rx)>
     R22 = zeros(Float64, length(ry), grid.Nx) # <v'(x)v'(x+ry)>
     R33 = zeros(Float64, length(rz), grid.Nx) # <w'(x)w'(x+rz)>
-    nPtsInv = 1.0 / (grid.Ny * grid.Nz)
+    # Get number of cells
+    Ny = grid.Ny
+    Nz = grid.Nz
+    nPtsInv = 1.0 / (Ny * Nz)
     # Loop over all cells
     @inbounds begin
         @batch for i = iL:iR
-            for k = 1:grid.Nz
-                for j = 1:grid.Ny
+            for k = 1:Nz
+                for j = 1:Ny
                     # Calculate fluctuating velocities at (i,j,k)
                     Ua = Q[i, j, k, 1] - QBar.UBar[i]
                     Va = Q[i, j, k, 2] - QBar.VBar[i]
                     Wa = Q[i, j, k, 3] - QBar.WBar[i]
                     # Calculate correlations in the x direction
                     for ii in eachindex(rx)
-                        # Get index of point to calculate flucuation at
-                        xp = x[i] + rx[ii]
-                        # Interpolate velocity at xp
-                        Ub = interp1D(xp, x, @view(Q[:, j, k, 1]), QBar.UBar)
+                        # Get index of point to calculate flucuation at (note: only correct within region of uniform grid spacing)
+                        idx = Int(i + ii - Nx / 2)
+                        # Restrict x to be within bounds
+                        if (idx < 1)
+                            idx = 1
+                        elseif (idx > grid.Nx)
+                            idx = grid.Nx
+                        end
+                        # Interpolate velocity at idx
+                        Ub = Q[idx, j, k, 1] - QBar.UBar[idx]
                         # Calculate velocity correlation tensor components in the x direction
                         R11[ii, i] += Ua * Ub
                     end
                     # Calculate correlations in the y direction
                     for jj in eachindex(ry)
                         # Get index of point to calculate flucuation at
-                        idx = Int(j + jj - grid.Ny / 2)
+                        idx = Int(j + jj - Ny / 2)
                         # Restrict y to be within 0 and 2π
                         if (idx <= 0)
-                            idx += grid.Ny
-                        elseif (idx > grid.Ny)
-                            idx -= grid.Ny
+                            idx += Ny
+                        elseif (idx > Ny)
+                            idx -= Ny
                         end
                         # Interpolate velocity at idx
                         Vb = Q[i, idx, k, 2] - QBar.VBar[i]
@@ -71,12 +84,12 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Calculate correlations in the z direction
                     for kk in eachindex(rz)
                         # Get index of point to calculate flucuation at
-                        idx = Int(k + kk - grid.Nz / 2)
+                        idx = Int(k + kk - Nz / 2)
                         # Restrict z to be within 0 and 2π
                         if (idx <= 0)
-                            idx += grid.Nz
-                        elseif (idx > grid.Nz)
-                            idx -= grid.Nz
+                            idx += Nz
+                        elseif (idx > Nz)
+                            idx -= Nz
                         end
                         # Interpolate velocity at idx
                         Wb = Q[i, j, idx, 3] - QBar.WBar[i]
@@ -85,45 +98,14 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     end
                 end
             end
-        end
-    end
-    # Divide by number of points to get averages
-    @inbounds begin
-        @tturbo for i = 1:grid.Nx
-            for ii = 1:length(rx)
-                R11[ii, i] *= nPtsInv
-            end
-        end
-        @tturbo for i = 1:grid.Nx
-            for jj = 1:length(ry)
-                R22[jj, i] *= nPtsInv
-            end
-        end
-        @tturbo for i = 1:grid.Nx
-            for kk = 1:length(rz)
-                R33[kk, i] *= nPtsInv
-            end
-        end
-    end
-    # Normalise by Rab(0)
-    i0 = Int(ceil(length(rx) / 2))
-    j0 = Int(ceil(length(ry) / 2))
-    k0 = Int(ceil(length(rz) / 2))
-    @inbounds begin
-        @tturbo for i = iL:iR
-            for ii = 1:length(rx)
-                R11[ii, i] /= R11[i0, i]
-            end
-        end
-        @tturbo for i = iL:iR
-            for jj = 1:length(ry)
-                R22[jj, i] /= R22[j0, i]
-            end
-        end
-        @tturbo for i = iL:iR
-            for kk = 1:length(rz)
-                R33[kk, i] /= R33[k0, i]
-            end
+            # Divide by number of points to get averages
+            R11[:, i] *= nPtsInv
+            R22[:, i] *= nPtsInv
+            R33[:, i] *= nPtsInv
+            # Normalise by Rab(0)
+            R11[:, i] /= R11[i0, i]
+            R22[:, i] /= R22[j0, i]
+            R33[:, i] /= R33[k0, i]
         end
     end
     # Write velocity correlations to file
@@ -153,7 +135,7 @@ function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R3
     Λz = zeros(Float64, grid.Nx)
     # Loop over cells in x direction
     @inbounds begin
-        @simd for i = iL:iR
+        for i = iL:iR
             # Get location of first zero crossing
             i2 = try
                 i0 - 1 + findfirst(x -> x < 0.0, @view(R11[i0:end, i])) - 1
@@ -207,12 +189,18 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     dwdzSquared = zeros(Float64, grid.Nx) # <(dw/dz)^2>
     omegaSquared = zeros(Float64, grid.Nx, 3) # <(omega_i)^2>
     divUSquared = zeros(Float64, grid.Nx) # <(du/dx+dv/dy+dw/dz)^2>
-    nPtsInv = 1.0 / (grid.Ny * grid.Nz)
+    # Get grid spacings and number of points
+    Nx = grid.Nx
+    Ny = grid.Ny
+    Nz = grid.Nz
+    ΔyInv = 0.5 / (y[2] - y[1]) # 1/(2Δy)
+    ΔzInv = 0.5 / (z[2] - z[1]) # 1/(2Δz)
+    nPtsInv = 1.0 / (Ny * Nz)
     # Loop over all cells
     @inbounds begin
-        @batch for k = 1:grid.Nz
-            for j = 1:grid.Ny
-                @simd for i = 1:grid.Nx
+        @batch for i = 1:Nx
+            for k = Nz
+                for j = Ny
                     uPrime = Q[i, j, k, 1] - QBar.UBar[i]
                     vPrime = Q[i, j, k, 2] - QBar.VBar[i]
                     wPrime = Q[i, j, k, 3] - QBar.WBar[i]
@@ -220,16 +208,51 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
                     R11[i] += uPrime * uPrime
                     R22[i] += vPrime * vPrime
                     R33[i] += wPrime * wPrime
-                    # Compute velocity derivatives
-                    Uii = dUdX(x, @view(Q[:, j, k, 1]), i) # du/dx
-                    Uji = dUdX(x, @view(Q[:, j, k, 2]), i) # dv/dx
-                    Uki = dUdX(x, @view(Q[:, j, k, 3]), i) # dw/dx
-                    Uij = dUdY(y, @view(Q[i, :, k, 1]), j) # du/dy
-                    Ujj = dUdY(y, @view(Q[i, :, k, 2]), j) # dv/dy
-                    Ukj = dUdY(y, @view(Q[i, :, k, 3]), j) # dw/dy
-                    Uik = dUdY(z, @view(Q[i, j, :, 1]), k) # du/dz
-                    Ujk = dUdY(z, @view(Q[i, j, :, 2]), k) # dv/dz
-                    Ukk = dUdY(z, @view(Q[i, j, :, 3]), k) # dw/dz
+                    # Compute velocity derivatives in x direction
+                    if (i == 1) # First order forward difference
+                        ΔxInv = 1.0 / (x[2] - x[1])
+                        Uii = (Q[2, j, k, 1] - Q[1, j, k, 1]) * ΔxInv
+                        Uji = (Q[2, j, k, 2] - Q[1, j, k, 2]) * ΔxInv
+                        Uki = (Q[2, j, k, 3] - Q[1, j, k, 3]) * ΔxInv
+                    elseif (i == Nx) # First order backward difference
+                        ΔxInv = 1.0 / (x[Nx] - x[Nx-1])
+                        Uii = (Q[Nx, j, k, 1] - Q[Nx-1, j, k, 1]) * ΔxInv
+                        Uji = (Q[Nx, j, k, 2] - Q[Nx-1, j, k, 2]) * ΔxInv
+                        Uki = (Q[Nx, j, k, 3] - Q[Nx-1, j, k, 3]) * ΔxInv
+                    else # Second order central difference
+                        ΔxInv = 0.5 / (x[i+1] - x[i-1])
+                        Uii = (Q[i+1, j, k, 1] - Q[i-1, j, k, 1]) * ΔxInv # du/dx
+                        Uji = (Q[i+1, j, k, 2] - Q[i-1, j, k, 2]) * ΔxInv# dv/dx
+                        Uki = (Q[i+1, j, k, 3] - Q[i-1, j, k, 3]) * ΔxInv # dw/dx
+                    end
+                    # Compute velocity derivatives in y direction
+                    if (j == 1) # Periodic
+                        Uij = (Q[i, 2, k, 1] - Q[i, Ny, k, 1]) * ΔyInv
+                        Ujj = (Q[i, 2, k, 2] - Q[i, Ny, k, 2]) * ΔyInv
+                        Ukj = (Q[i, 2, k, 3] - Q[i, Ny, k, 3]) * ΔyInv
+                    elseif (j == Ny) # Periodic
+                        Uij = (Q[i, 1, k, 1] - Q[i, Ny-1, k, 1]) * ΔyInv
+                        Ujj = (Q[i, 1, k, 2] - Q[i, Ny-1, k, 2]) * ΔyInv
+                        Ukj = (Q[i, 1, k, 3] - Q[i, Ny-1, k, 3]) * ΔyInv
+                    else # Second order central difference
+                        Uij = (Q[i, j+1, k, 1] - Q[i, j-1, k, 1]) * ΔyInv # du/dy
+                        Ujj = (Q[i, j+1, k, 2] - Q[i, j-1, k, 2]) * ΔyInv # dv/dy
+                        Ukj = (Q[i, j+1, k, 3] - Q[i, j-1, k, 3]) * ΔyInv # dw/dy
+                    end
+                    # Compute velocity derivatives in z direction
+                    if (k == 1) # Periodic
+                        Uik = (Q[i, j, 2, 1] - Q[i, j, Nz, 1]) * ΔzInv
+                        Ujk = (Q[i, j, 2, 2] - Q[i, j, Nz, 2]) * ΔzInv
+                        Ukk = (Q[i, j, 2, 3] - Q[i, j, Nz, 3]) * ΔzInv
+                    elseif (k == Nz) # Periodic
+                        Uik = (Q[i, j, 1, 1] - Q[i, j, Nz-1, 1]) * ΔzInv
+                        Ujk = (Q[i, j, 1, 2] - Q[i, j, Nz-1, 2]) * ΔzInv
+                        Ukk = (Q[i, j, 1, 3] - Q[i, j, Nz-1, 3]) * ΔzInv
+                    else # Second order central difference
+                        Uik = (Q[i, j, k+1, 1] - Q[i, j, k-1, 1]) * ΔzInv # du/dz
+                        Ujk = (Q[i, j, k+1, 2] - Q[i, j, k-1, 2]) * ΔzInv # dv/dz
+                        Ukk = (Q[i, j, k+1, 3] - Q[i, j, k-1, 3]) * ΔzInv # dw/dz
+                    end
                     # Compute square of velocity derivatives
                     dudxSquared[i] += Uii * Uii
                     dvdySquared[i] += Ujj * Ujj
@@ -245,21 +268,17 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
                     # Compute fluctuating divergence
                     divU = Uii + Ujj + Ukk
                     # Compute square of fluctuating divergence
-                    divUSquared = divU * divU
+                    divUSquared[i] += divU * divU
                 end
             end
-        end
-    end
-    # Divide by number of points to get averages
-    @inbounds begin
-        @tturbo for i = 1:grid.Nx
+            # Divide by number of points to get averages
             R11[i] *= nPtsInv
             R22[i] *= nPtsInv
             R33[i] *= nPtsInv
             dudxSquared[i] *= nPtsInv
             dvdySquared[i] *= nPtsInv
             dwdzSquared[i] *= nPtsInv
-            omegaSquared[i] *= nPtsInv
+            omegaSquared[i, :] *= nPtsInv
             divUSquared[i] *= nPtsInv
         end
     end
@@ -290,7 +309,7 @@ function calcDissipationRates(QBar::planeAverage, omegaSquared::Array{Float64,2}
     fourNinths = 4.0 / 9.0
     # Loop over all cells
     @inbounds begin
-        @tturbo for i = 1:Nx
+        @simd for i = 1:Nx
             nuBar = QBar.muBar[i] / QBar.rhoBar[i]
             εx[i] = nuBar * (omegaSquared[i, 1] + fourNinths * divUSquared[i])
             εy[i] = nuBar * (omegaSquared[i, 2] + fourNinths * divUSquared[i])
@@ -308,7 +327,7 @@ function calcTaylorMicroscales(R11::Array{Float64,1}, R22::Array{Float64,1}, R33
     λz = zeros(Float64, Nx)
     # Loop over all cells
     @inbounds begin
-        @tturbo for i = 1:Nx
+        @simd for i = 1:Nx
             λx[i] = sqrt(R11[i] / dudxSquared[i])
             λy[i] = sqrt(R22[i] / dvdySquared[i])
             λz[i] = sqrt(R33[i] / dwdzSquared[i])
@@ -325,7 +344,7 @@ function calcKolmogorovMicroscales(nuBar::Array{Float64,1}, εx::Array{Float64,1
     ηz = zeros(Float64, Nx)
     # Loop over all cells
     @inbounds begin
-        @tturbo for i = 1:Nx
+        @simd for i = 1:Nx
             nuBarCubed = nuBar[i]^3
             ηx[i] = (nuBarCubed / εx[i])^0.25
             ηy[i] = (nuBarCubed / εy[i])^0.25
