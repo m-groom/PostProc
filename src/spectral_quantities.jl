@@ -4,12 +4,12 @@
 function calcSpectralQuantities(t::Float64, x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate radial power spectra
     tStart = report("Calculating radial power spectra", 1)
-    Eyz, κ = calcPowerSpectra(x, Q, QBar, grid, t, dataDir)
+    @time Eyz, κ = calcPowerSpectra(x, Q, QBar, grid, t, dataDir)
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate integral length
     tStart = report("Calculating integral length", 1)
-    calcIntegralLength(κ, Eyz, x, grid, t, dataDir)
+    @time calcIntegralLength(κ, Eyz, x, grid, t, dataDir)
     tEnd = report("Finished calculating integral length...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
@@ -37,6 +37,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
     E1Dx = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for u' at x = x0
     E1Dy = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for v' at x = x0
     E1Dz = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for w' at x = x0
+    E1Dyz = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for v' + w' at x = x0
     κ1D = Float64.(collect(0:κMax)) # radial wavenumber
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
@@ -45,7 +46,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
     # Get fluctuating velocity components
     @inbounds begin
         @batch for i = iL:iR
-            @turbo for k = 1:grid.Nz
+            for k = 1:grid.Nz
                 for j = 1:grid.Ny
                     uPrime[j, k] = Q[i, j, k, 1] - QBar.UBar[i]
                     vPrime[j, k] = Q[i, j, k, 2] - QBar.VBar[i]
@@ -63,7 +64,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
             for n in eachindex(κz)
                 for m in eachindex(κy)
                     κ = sqrt(κy[m]^2 + κz[n]^2)
-                    @simd for p in eachindex(κ1D)
+                    for p in eachindex(κ1D)
                         κp = p * Δκ
                         if (κp - Δκ / 2 <= κ && κ < κp + Δκ / 2)
                             E1Dx[p+1, i] += E2Dx[m, n] * constant
@@ -73,12 +74,12 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
                     end
                 end
             end
+            # Calculate total energy in yz direction
+            E1Dyz[:, i] = @view(E1Dy[:, i]) .+ @view(E1Dz[:, i])
         end
     end
     # Write energy spectra to file
     writeEnergySpectra(t, κ1D, E1Dx, E1Dy, E1Dz, x, grid, dataDir)
-    # Calculate total energy in yz direction
-    E1Dyz = @turbo E1Dy .+ E1Dz
 
     return E1Dyz, κ1D
 
@@ -104,7 +105,7 @@ function calcIntegralLength(κ::Array{Float64,1}, Eyz::Array{Float64,2}, x::SubA
     threePiOnFour = 3.0 * π / 4.0
     # Loop over x
     @inbounds begin
-        @batch for i = iL:iR
+        for i = iL:iR
             # Calculate integral length in yz plane
             Lyz[i] = threePiOnFour * integrateEonK(@view(Eyz[:, i]), κ, Δκ, N) / integrate(@view(Eyz[:, i]), Δκ, N)
         end
