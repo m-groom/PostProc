@@ -88,26 +88,19 @@ function convertSolution!(Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, 
     tStart = report("Converting to primitive variables", 1)
     # Loop over all cells
     @inbounds begin
-        @tturbo for k = 1:Nz
+        @batch for k = 1:Nz
             for j = 1:Ny
                 for i = 1:Nx
                     rhoInv = 1.0 / Q[i, j, k, nVars-3]
                     Q[i, j, k, 1] *= rhoInv
                     Q[i, j, k, 2] *= rhoInv
                     Q[i, j, k, 3] *= rhoInv
-                end
-            end
-        end
-        if (nVars >= 10)
-            @tturbo for k = 1:Nz
-                for j = 1:Ny
-                    for i = 1:Nx
-                        rhoInv = 1.0 / Q[i, j, k, nVars-3]
+                    if (nVars >= 10)
                         Q[i, j, k, 5] *= rhoInv
                         Q[i, j, k, 6] *= rhoInv
                     end
                 end
-            end        
+            end
         end
     end
     # Reporting 
