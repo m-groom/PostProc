@@ -4,12 +4,12 @@
 function calcSpectralQuantities(t::Float64, x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
     # Calculate radial power spectra
     tStart = report("Calculating radial power spectra", 1)
-    @time Eyz, κ = calcPowerSpectra(x, Q, QBar, grid, t, dataDir)
+    Eyz, κ = calcPowerSpectra(x, Q, QBar, grid, t, dataDir)
     tEnd = report("Finished calculating radial power spectra...", 1)
     report("Elapsed time: $(tEnd - tStart)")
     # Calculate integral length
     tStart = report("Calculating integral length", 1)
-    @time calcIntegralLength(κ, Eyz, x, grid, t, dataDir)
+    calcIntegralLength(κ, Eyz, x, grid, t, dataDir)
     tEnd = report("Finished calculating integral length...", 1)
     report("Elapsed time: $(tEnd - tStart)")
 end
