@@ -10,7 +10,6 @@ using Printf
 using Base.Threads: @threads
 using Polyester: @batch
 using StrideArrays: PtrArray
-using LoopVectorization: @turbo, @tturbo
 # Load functions
 include("src/structs.jl")
 include("src/file_io.jl")
@@ -49,7 +48,7 @@ for n = 1:input.nFiles
 
     # Calculate plane averages
     QBar = getPlaneAverages(@view(x[:, 1, 1]), Q, grid.Nx, grid.Ny, grid.Nz, input.nVars, thermo)
-
+    
     # Write plane averages
     writePlaneAverages(t, QBar, grid, dataDir)
     
