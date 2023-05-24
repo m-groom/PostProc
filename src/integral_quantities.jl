@@ -54,7 +54,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Calculate correlations in the x direction
                     for ii in eachindex(rx)
                         # Get index of point to calculate flucuation at (note: only correct within region of uniform grid spacing)
-                        idx = Int(i + ii - Nx / 2)
+                        idx = Int(i-1 + ii - Nx / 2)
                         # Restrict x to be within bounds
                         if (idx < 1)
                             idx = 1
@@ -69,7 +69,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Calculate correlations in the y direction
                     for jj in eachindex(ry)
                         # Get index of point to calculate flucuation at
-                        idx = Int(j + jj - Ny / 2)
+                        idx = Int(j-1 + jj - Ny / 2)
                         # Restrict y to be within 0 and 2π
                         if (idx <= 0)
                             idx += Ny
@@ -84,7 +84,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Calculate correlations in the z direction
                     for kk in eachindex(rz)
                         # Get index of point to calculate flucuation at
-                        idx = Int(k + kk - Nz / 2)
+                        idx = Int(k-1 + kk - Nz / 2)
                         # Restrict z to be within 0 and 2π
                         if (idx <= 0)
                             idx += Nz
