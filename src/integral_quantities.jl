@@ -26,10 +26,10 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
     # Get separation directions
-    rx = @view(x[iL:iR]) .- 0.5 .* x[iR]
-    Nx = length(rx) - 1
     ry = y .- 0.5 .* y[end]
     rz = z .- 0.5 .* z[end]
+    rx = ry
+    Nx = length(rx) - 1
     # Location of r=0
     i0 = Int(ceil(length(rx) / 2))
     j0 = Int(ceil(length(ry) / 2))
@@ -122,9 +122,9 @@ function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R3
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
     # Get separation directions
-    rx = @view(x[iL:iR]) .- 0.5 .* x[iR]
     ry = y .- 0.5 .* y[end]
     rz = z .- 0.5 .* z[end]
+    rx = ry
     # Get location of maximum
     i0 = Int(ceil(length(rx) / 2))
     j0 = Int(ceil(length(ry) / 2))
