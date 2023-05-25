@@ -221,9 +221,9 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
                         Uji = (Q[Nx, j, k, 2] - Q[Nx-1, j, k, 2]) * ΔxInv
                         Uki = (Q[Nx, j, k, 3] - Q[Nx-1, j, k, 3]) * ΔxInv
                     else # Second order central difference
-                        ΔxInv = 0.5 / (x[i+1] - x[i-1])
+                        ΔxInv = 1.0 / (x[i+1] - x[i-1])
                         Uii = (Q[i+1, j, k, 1] - Q[i-1, j, k, 1]) * ΔxInv # du/dx
-                        Uji = (Q[i+1, j, k, 2] - Q[i-1, j, k, 2]) * ΔxInv# dv/dx
+                        Uji = (Q[i+1, j, k, 2] - Q[i-1, j, k, 2]) * ΔxInv # dv/dx
                         Uki = (Q[i+1, j, k, 3] - Q[i-1, j, k, 3]) * ΔxInv # dw/dx
                     end
                     # Compute velocity derivatives in y direction
