@@ -27,6 +27,7 @@ t = 0.0
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
 const x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
+
 # Loop over all time steps
 for n = 1:input.nFiles
     # Get time step
