@@ -279,7 +279,9 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
             dudxSquared[i] *= nPtsInv
             dvdySquared[i] *= nPtsInv
             dwdzSquared[i] *= nPtsInv
-            omegaSquared[i, :] *= nPtsInv
+            omegaSquared[i, 1] *= nPtsInv
+            omegaSquared[i, 2] *= nPtsInv
+            omegaSquared[i, 3] *= nPtsInv
             divUSquared[i] *= nPtsInv
         end
     end
