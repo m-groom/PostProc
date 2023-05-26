@@ -200,8 +200,8 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     # Loop over all cells
     @inbounds begin
         @batch for i = 1:Nx
-            for k = Nz
-                for j = Ny
+            for k = 1:Nz
+                for j = 1:Ny
                     uPrime = Q[i, j, k, 1] - QBar.UBar[i]
                     vPrime = Q[i, j, k, 2] - QBar.VBar[i]
                     wPrime = Q[i, j, k, 3] - QBar.WBar[i]
