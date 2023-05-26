@@ -6,7 +6,7 @@ import Dates
 import WriteVTK
 import FFTW
 using Printf
-using Base.Threads: @threads
+using Base.Threads: @threads, threadid, nthreads
 using Polyester: @batch
 using StrideArrays: PtrArray
 # Load functions
