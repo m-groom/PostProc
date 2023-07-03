@@ -1,13 +1,12 @@
 # PostProc: Post processing routines for CFD simulations on rectilinear grids
 
 # Load modules
-import PyPlot as plt
 import FortranFiles as FFile
 import Dates
 import WriteVTK
 import FFTW
 using Printf
-using Base.Threads: @threads
+using Base.Threads: @threads, threadid, nthreads
 using Polyester: @batch
 using StrideArrays: PtrArray
 # Load functions
@@ -28,6 +27,7 @@ t = 0.0
 timeStep = rpad(string(round(t, digits=8)), 10, "0")
 # Load grid
 const x, y, z = readPlot3DGrid(timeStep, grid.Nx, grid.Ny, grid.Nz, dataDir)
+
 # Loop over all time steps
 for n = 1:input.nFiles
     # Get time step

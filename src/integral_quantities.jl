@@ -26,10 +26,10 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
     # Get separation directions
-    rx = @view(x[iL:iR]) .- 0.5 .* x[iR]
-    Nx = length(rx) - 1
     ry = y .- 0.5 .* y[end]
     rz = z .- 0.5 .* z[end]
+    Nx = 2 * (length(@view(x[iL:iR])) - 1)
+    rx = collect(range(-grid.xR, stop=grid.xR, length=Nx + 1))
     # Location of r=0
     i0 = Int(ceil(length(rx) / 2))
     j0 = Int(ceil(length(ry) / 2))
@@ -54,7 +54,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Calculate correlations in the x direction
                     for ii in eachindex(rx)
                         # Get index of point to calculate flucuation at (note: only correct within region of uniform grid spacing)
-                        idx = Int(i + ii - Nx / 2)
+                        idx = Int(i - 1 + ii - Nx / 2)
                         # Restrict x to be within bounds
                         if (idx < 1)
                             idx = 1
@@ -69,7 +69,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Calculate correlations in the y direction
                     for jj in eachindex(ry)
                         # Get index of point to calculate flucuation at
-                        idx = Int(j + jj - Ny / 2)
+                        idx = Int(j - 1 + jj - Ny / 2)
                         # Restrict y to be within 0 and 2π
                         if (idx <= 0)
                             idx += Ny
@@ -84,7 +84,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
                     # Calculate correlations in the z direction
                     for kk in eachindex(rz)
                         # Get index of point to calculate flucuation at
-                        idx = Int(k + kk - Nz / 2)
+                        idx = Int(k - 1 + kk - Nz / 2)
                         # Restrict z to be within 0 and 2π
                         if (idx <= 0)
                             idx += Nz
@@ -122,9 +122,10 @@ function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R3
     # Find index where x = xR
     iR = searchsortedfirst(x, grid.xR)
     # Get separation directions
-    rx = @view(x[iL:iR]) .- 0.5 .* x[iR]
     ry = y .- 0.5 .* y[end]
     rz = z .- 0.5 .* z[end]
+    Nx = 2 * (length(@view(x[iL:iR])) - 1)
+    rx = collect(range(-grid.xR, stop=grid.xR, length=Nx + 1))
     # Get location of maximum
     i0 = Int(ceil(length(rx) / 2))
     j0 = Int(ceil(length(ry) / 2))
@@ -199,8 +200,8 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
     # Loop over all cells
     @inbounds begin
         @batch for i = 1:Nx
-            for k = Nz
-                for j = Ny
+            for k = 1:Nz
+                for j = 1:Ny
                     uPrime = Q[i, j, k, 1] - QBar.UBar[i]
                     vPrime = Q[i, j, k, 2] - QBar.VBar[i]
                     wPrime = Q[i, j, k, 3] - QBar.WBar[i]
@@ -220,9 +221,9 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
                         Uji = (Q[Nx, j, k, 2] - Q[Nx-1, j, k, 2]) * ΔxInv
                         Uki = (Q[Nx, j, k, 3] - Q[Nx-1, j, k, 3]) * ΔxInv
                     else # Second order central difference
-                        ΔxInv = 0.5 / (x[i+1] - x[i-1])
+                        ΔxInv = 1.0 / (x[i+1] - x[i-1])
                         Uii = (Q[i+1, j, k, 1] - Q[i-1, j, k, 1]) * ΔxInv # du/dx
-                        Uji = (Q[i+1, j, k, 2] - Q[i-1, j, k, 2]) * ΔxInv# dv/dx
+                        Uji = (Q[i+1, j, k, 2] - Q[i-1, j, k, 2]) * ΔxInv # dv/dx
                         Uki = (Q[i+1, j, k, 3] - Q[i-1, j, k, 3]) * ΔxInv # dw/dx
                     end
                     # Compute velocity derivatives in y direction
@@ -278,7 +279,9 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
             dudxSquared[i] *= nPtsInv
             dvdySquared[i] *= nPtsInv
             dwdzSquared[i] *= nPtsInv
-            omegaSquared[i, :] *= nPtsInv
+            omegaSquared[i, 1] *= nPtsInv
+            omegaSquared[i, 2] *= nPtsInv
+            omegaSquared[i, 3] *= nPtsInv
             divUSquared[i] *= nPtsInv
         end
     end

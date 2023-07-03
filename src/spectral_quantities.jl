@@ -30,33 +30,38 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
     constant = Δy * Δz * min(Δκy, Δκz) / (8.0 * π^2 * grid.Ny * grid.Nz)
     # Calculatate maximum radial wavenumber
     κMax = Int(ceil(sqrt(2.0) * max(grid.Ny / 2, grid.Nz / 2)))
+    # Find index where x = xL
+    iL = searchsortedfirst(x, grid.xL)
+    # Find index where x = xR
+    iR = searchsortedfirst(x, grid.xR)
+    # Get number of threads
+    nt = nthreads()
     # Initialise arrays
-    uPrime = zeros(Float64, grid.Ny, grid.Nz) # u'
-    vPrime = zeros(Float64, grid.Ny, grid.Nz) # v'
-    wPrime = zeros(Float64, grid.Ny, grid.Nz) # w'
+    uPrime = zeros(Float64, grid.Ny, grid.Nz, nt) # u'
+    vPrime = zeros(Float64, grid.Ny, grid.Nz, nt) # v'
+    wPrime = zeros(Float64, grid.Ny, grid.Nz, nt) # w'
     E1Dx = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for u' at x = x0
     E1Dy = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for v' at x = x0
     E1Dz = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for w' at x = x0
     E1Dyz = zeros(Float64, κMax + 1, grid.Nx) # Energy spectrum for v' + w' at x = x0
     κ1D = Float64.(collect(0:κMax)) # radial wavenumber
-    # Find index where x = xL
-    iL = searchsortedfirst(x, grid.xL)
-    # Find index where x = xR
-    iR = searchsortedfirst(x, grid.xR)
-    # Get fluctuating velocity components
+    # Loop over x
     @inbounds begin
         @batch for i = iL:iR
+            # Get thread ID
+            tid = threadid()
+            # Get fluctuating velocity components
             for k = 1:grid.Nz
                 for j = 1:grid.Ny
-                    uPrime[j, k] = Q[i, j, k, 1] - QBar.UBar[i]
-                    vPrime[j, k] = Q[i, j, k, 2] - QBar.VBar[i]
-                    wPrime[j, k] = Q[i, j, k, 3] - QBar.WBar[i]
+                    uPrime[j, k, tid] = Q[i, j, k, 1] - QBar.UBar[i]
+                    vPrime[j, k, tid] = Q[i, j, k, 2] - QBar.VBar[i]
+                    wPrime[j, k, tid] = Q[i, j, k, 3] - QBar.WBar[i]
                 end
             end
             # 2D FFT to get power spectral density
-            uHat = FFTW.fftshift(FFTW.fft(uPrime))
-            vHat = FFTW.fftshift(FFTW.fft(vPrime))
-            wHat = FFTW.fftshift(FFTW.fft(wPrime))
+            uHat = FFTW.fftshift(FFTW.fft(@view(uPrime[:, :, tid])))
+            vHat = FFTW.fftshift(FFTW.fft(@view(vPrime[:, :, tid])))
+            wHat = FFTW.fftshift(FFTW.fft(@view(wPrime[:, :, tid])))
             E2Dx = real.(uHat .* conj(uHat))
             E2Dy = real.(vHat .* conj(vHat))
             E2Dz = real.(wHat .* conj(wHat))
@@ -70,6 +75,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
                             E1Dx[p+1, i] += E2Dx[m, n] * constant
                             E1Dy[p+1, i] += E2Dy[m, n] * constant
                             E1Dz[p+1, i] += E2Dz[m, n] * constant
+                            break
                         end
                     end
                 end
