@@ -1,7 +1,7 @@
 # Tools for use in functions from spectral_quantities.jl
 
 # Function to integrate E(κ)
-function integrate(E::SubArray{Float64,1}, Δκ::Float64, N::Int64)
+function integrate(E::AbstractArray, Δκ::AbstractFloat, N::Integer)
     integral = 0.0
     @inbounds begin
         @simd for i in 1:N
@@ -12,7 +12,7 @@ function integrate(E::SubArray{Float64,1}, Δκ::Float64, N::Int64)
 end
 
 # Function to integrate E(κ) / κ
-function integrateEonK(E::SubArray{Float64,1}, κ::Array{Float64,1}, Δκ::Float64, N::Int64)
+function integrateEonK(E::AbstractArray, κ::AbstractArray, Δκ::AbstractFloat, N::Integer)
     integral = 0.5 * Δκ * (E[2] / κ[2]) # i=1
     @inbounds begin
         @simd for i in 2:N

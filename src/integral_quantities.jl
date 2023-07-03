@@ -1,7 +1,7 @@
 # Functions for calculating and manipulating integral quantities
 
 # Top level function to calculate integral quantities
-function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
+function calcIntegralQuantities(t::AbstractFloat, x::AbstractArray, y::AbstractArray, z::AbstractArray, Q::AbstractArray, QBar::planeAverage, grid::rectilinearGrid, dataDir::AbstractString)
     # Calculate velocity correlation tensor
     tStart = report("Calculating velocity correlation tensor", 1)
     R11, R22, R33 = calcVelocityCorrelation(x, y, z, Q, QBar, grid, t, dataDir)
@@ -20,7 +20,7 @@ function calcIntegralQuantities(t::Float64, x::SubArray{Float32,1}, y::SubArray{
 end
 
 # Function to calculate velocity correlation tensor at x = x0
-function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, t::Float64, dataDir::String)
+function calcVelocityCorrelation(x::AbstractArray, y::AbstractArray, z::AbstractArray, Q::AbstractArray, QBar::planeAverage, grid::rectilinearGrid, t::AbstractFloat, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -116,7 +116,7 @@ function calcVelocityCorrelation(x::SubArray{Float32,1}, y::SubArray{Float32,1},
 end
 
 # Function to calculate (longitudinal) correlation lengths
-function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R33::Array{Float64,2}, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, grid::rectilinearGrid)
+function calcCorrelationLengths(R11::AbstractArray, R22::AbstractArray, R33::AbstractArray, x::AbstractArray, y::AbstractArray, z::AbstractArray, grid::rectilinearGrid)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -180,7 +180,7 @@ function calcCorrelationLengths(R11::Array{Float64,2}, R22::Array{Float64,2}, R3
 end
 
 # Function to calculate Taylor and Kolmorogov microscales
-function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float32,1}, z::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
+function calcLengthScales(t::AbstractFloat, x::AbstractArray, y::AbstractArray, z::AbstractArray, Q::AbstractArray, QBar::planeAverage, grid::rectilinearGrid, dataDir::AbstractString)
     # Initialise arrays
     R11 = zeros(Float64, grid.Nx) # <u'u'>
     R22 = zeros(Float64, grid.Nx) # <v'v'>
@@ -303,7 +303,7 @@ function calcLengthScales(t::Float64, x::SubArray{Float32,1}, y::SubArray{Float3
 end
 
 # Function to calculate dissipation rates
-function calcDissipationRates(QBar::planeAverage, omegaSquared::Array{Float64,2}, divUSquared::Array{Float64,1}, Nx::Int64)
+function calcDissipationRates(QBar::planeAverage, omegaSquared::AbstractArray, divUSquared::AbstractArray, Nx::Integer)
     # Initialise arrays
     εx = zeros(Float64, Nx)
     εy = zeros(Float64, Nx)
@@ -323,7 +323,7 @@ function calcDissipationRates(QBar::planeAverage, omegaSquared::Array{Float64,2}
 end
 
 # Function to calculate Taylor microscales
-function calcTaylorMicroscales(R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, dudxSquared::Array{Float64,1}, dvdySquared::Array{Float64,1}, dwdzSquared::Array{Float64,1}, Nx::Int64)
+function calcTaylorMicroscales(R11::AbstractArray, R22::AbstractArray, R33::AbstractArray, dudxSquared::AbstractArray, dvdySquared::AbstractArray, dwdzSquared::AbstractArray, Nx::Integer)
     # Initialise arrays
     λx = zeros(Float64, Nx)
     λy = zeros(Float64, Nx)
@@ -340,7 +340,7 @@ function calcTaylorMicroscales(R11::Array{Float64,1}, R22::Array{Float64,1}, R33
 end
 
 # Function to calculate Kolmogorov microscales
-function calcKolmogorovMicroscales(nuBar::Array{Float64,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, Nx::Int64)
+function calcKolmogorovMicroscales(nuBar::AbstractArray, εx::AbstractArray, εy::AbstractArray, εz::AbstractArray, Nx::Integer)
     # Initialise arrays
     ηx = zeros(Float64, Nx)
     ηy = zeros(Float64, Nx)

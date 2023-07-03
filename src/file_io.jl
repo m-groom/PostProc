@@ -18,7 +18,7 @@ function report(message, returnTime=0)
 end
 
 # function to read settings for the post.par file
-function readSettings(filename::String)
+function readSettings(filename::AbstractString)
     # Initialise viscosity
     μ = zeros(2) # Assumes two species
     W = zeros(2) # Assumes two species
@@ -64,7 +64,7 @@ function readSettings(filename::String)
 end
 
 # Function for writing the solution to a .vtr file
-function writeSolution(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, z::SubArray{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, dataDir::String)
+function writeSolution(t::AbstractFloat, x::AbstractArray, y::AbstractArray, z::AbstractArray, Q::AbstractArray, iNVars::Integer, dataDir::AbstractString)
     tStart = report("Writing the solution at time $(rpad(string(round(t, digits=5)), 7, "0"))", 1)
     # Check that there are 8, 10 or 12 variables
     if (iNVars == 8) || (iNVars == 10) || (iNVars == 12)
@@ -94,7 +94,7 @@ function writeSolution(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3
 end
 
 # Function for writing out a slice to a .vtr file
-function writeSlice(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, z::SubArray{Float32,3}, Q::Array{Float32,4}, iNVars::Int64, slice::String, x0::Float64, dataDir::String)
+function writeSlice(t::AbstractFloat, x::AbstractArray, y::AbstractArray, z::AbstractArray, Q::AbstractArray, iNVars::Int64, slice::AbstractString, x0::AbstractFloat, dataDir::AbstractString)
     # Calculate y0 and z0
     y0 = (y[1, end, 1] + y[1, 1, 1]) * 0.5
     z0 = (z[1, 1, end] + z[1, 1, 1]) * 0.5
@@ -147,7 +147,7 @@ function writeSlice(t::Float64, x::SubArray{Float32,3}, y::SubArray{Float32,3}, 
 end
 
 # Function for reading a Plot3D grid file
-function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, dataDir::String)
+function readPlot3DGrid(timeStep::AbstractString, Nx::Int64, Ny::Int64, Nz::Int64, dataDir::AbstractString)
     # Read prempi.dat file
     report("Reading file $(dataDir)/prempi.dat")
     NPR, extents = readPrempi("$(dataDir)/prempi.dat")
@@ -200,7 +200,7 @@ function readPlot3DGrid(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, dataD
 end
 
 # Function for reading a Plot3D solution file
-function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64, dataDir::String)
+function readPlot3DSolution(timeStep::AbstractString, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64, dataDir::AbstractString)
     # Read prempi.dat file
     report("Reading grid partition data from file $(dataDir)/prempi.dat")
     NPR, extents = readPrempi("$(dataDir)/prempi.dat")
@@ -249,7 +249,7 @@ function readPlot3DSolution(timeStep::String, Nx::Int64, Ny::Int64, Nz::Int64, n
 end
 
 # Function for reading a FLAMENCO prempi.dat file
-function readPrempi(filename::String)
+function readPrempi(filename::AbstractString)
     # Open file
     file = open(filename, "r")
     # Read number of processors
@@ -275,7 +275,7 @@ function readPrempi(filename::String)
 end
 
 # Function to write out plane averages to a space delimited text file
-function writePlaneAverages(t::Float64, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
+function writePlaneAverages(t::AbstractFloat, QBar::planeAverage, grid::rectilinearGrid, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(QBar.x, grid.xL)
     # Find index where x = xR
@@ -300,7 +300,7 @@ function writePlaneAverages(t::Float64, QBar::planeAverage, grid::rectilinearGri
 end
 
 # Function to write out velocity correlation to a space delimited text file
-function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,2}, R22::Array{Float64,2}, R33::Array{Float64,2}, grid::rectilinearGrid, dataDir::String)
+function writeVelocityCorrelation(t::AbstractFloat, x::AbstractArray, R11::AbstractArray, R22::AbstractArray, R33::AbstractArray, grid::rectilinearGrid, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -365,7 +365,7 @@ function writeVelocityCorrelation(t::Float64, x::SubArray{Float32,1}, R11::Array
 end
 
 # Function to write correlation lengths to file
-function writeCorrelationLengths(t::Float64, x::SubArray{Float32,1}, Λx::Array{Float64,1}, Λy::Array{Float64,1}, Λz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+function writeCorrelationLengths(t::AbstractFloat, x::AbstractArray, Λx::AbstractArray, Λy::AbstractArray, Λz::AbstractArray, grid::rectilinearGrid, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -388,7 +388,7 @@ function writeCorrelationLengths(t::Float64, x::SubArray{Float32,1}, Λx::Array{
 end
 
 # Function to write out Reynolds stresses to a space delimited text file
-function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Float64,1}, R22::Array{Float64,1}, R33::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+function writeReynoldsStresses(t::AbstractFloat, x::AbstractArray, R11::AbstractArray, R22::AbstractArray, R33::AbstractArray, grid::rectilinearGrid, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -411,7 +411,7 @@ function writeReynoldsStresses(t::Float64, x::SubArray{Float32,1}, R11::Array{Fl
 end
 
 # Function to write out dissipation rates to a space delimited text file
-function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Float64,1}, εy::Array{Float64,1}, εz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+function writeDissipationRates(t::AbstractFloat, x::AbstractArray, εx::AbstractArray, εy::AbstractArray, εz::AbstractArray, grid::rectilinearGrid, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -434,7 +434,7 @@ function writeDissipationRates(t::Float64, x::SubArray{Float32,1}, εx::Array{Fl
 end
 
 # Function to write out Taylor microscales to a space delimited text file
-function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{Float64,1}, λy::Array{Float64,1}, λz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+function writeTaylorMicroscales(t::AbstractFloat, x::AbstractArray, λx::AbstractArray, λy::AbstractArray, λz::AbstractArray, grid::rectilinearGrid, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -457,7 +457,7 @@ function writeTaylorMicroscales(t::Float64, x::SubArray{Float32,1}, λx::Array{F
 end
 
 # Function to write out Kolmogorov microscales to a space delimited text file
-function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Array{Float64,1}, ηy::Array{Float64,1}, ηz::Array{Float64,1}, grid::rectilinearGrid, dataDir::String)
+function writeKolmogorovMicroscales(t::AbstractFloat, x::AbstractArray, ηx::AbstractArray, ηy::AbstractArray, ηz::AbstractArray, grid::rectilinearGrid, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR
@@ -480,7 +480,7 @@ function writeKolmogorovMicroscales(t::Float64, x::SubArray{Float32,1}, ηx::Arr
 end
 
 # Function to write energy spectra to a space delimited text file
-function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,2}, Ey::Array{Float64,2}, Ez::Array{Float64,2}, x::SubArray{Float32,1}, grid::rectilinearGrid, dataDir::String)
+function writeEnergySpectra(t::AbstractFloat, κ::AbstractArray, Ex::AbstractArray, Ey::AbstractArray, Ez::AbstractArray, x::AbstractArray, grid::rectilinearGrid, dataDir::AbstractString)
     # Calculate Nyquist wavenumber
     N = Int(max(grid.Ny / 2, grid.Nz / 2))
     # Find index where x = xL
@@ -547,7 +547,7 @@ function writeEnergySpectra(t::Float64, κ::Array{Float64,1}, Ex::Array{Float64,
 end
 
 # Function to write integral length to a space delimited text file
-function writeIntegralLength(t::Float64, Lyz::Array{Float64,1}, x::SubArray{Float32,1}, dataDir::String)
+function writeIntegralLength(t::AbstractFloat, Lyz::AbstractArray, x::AbstractArray, dataDir::AbstractString)
     # Find index where x = xL
     iL = searchsortedfirst(x, grid.xL)
     # Find index where x = xR

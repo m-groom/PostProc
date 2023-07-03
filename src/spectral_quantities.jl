@@ -1,7 +1,7 @@
 # Functions for calculating and manipulating spectral quantities
 
 # Top level function to calculate spectral quantities
-function calcSpectralQuantities(t::Float64, x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, dataDir::String)
+function calcSpectralQuantities(t::AbstractFloat, x::AbstractFloat, Q::AbstractFloat, QBar::planeAverage, grid::rectilinearGrid, dataDir::AbstractString)
     # Calculate radial power spectra
     tStart = report("Calculating radial power spectra", 1)
     Eyz, κ = calcPowerSpectra(x, Q, QBar, grid, t, dataDir)
@@ -15,7 +15,7 @@ function calcSpectralQuantities(t::Float64, x::SubArray{Float32,1}, Q::Array{Flo
 end
 
 # Function to calculate radial power spectra at x = x0 for each velocity component
-function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::planeAverage, grid::rectilinearGrid, t::Float64, dataDir::String)
+function calcPowerSpectra(x::AbstractFloat, Q::AbstractFloat, QBar::planeAverage, grid::rectilinearGrid, t::AbstractFloat, dataDir::AbstractString)
     # Get wavenumbers and spacing
     κy = collect(FFTW.fftshift(FFTW.fftfreq(grid.Ny, grid.Ny)))
     κz = collect(FFTW.fftshift(FFTW.fftfreq(grid.Nz, grid.Nz)))
@@ -92,7 +92,7 @@ function calcPowerSpectra(x::SubArray{Float32,1}, Q::Array{Float32,4}, QBar::pla
 end
 
 # Function to calculate integral length
-function calcIntegralLength(κ::Array{Float64,1}, Eyz::Array{Float64,2}, x::SubArray{Float32,1}, grid::rectilinearGrid, t::Float64, dataDir::String)
+function calcIntegralLength(κ::AbstractFloat, Eyz::AbstractFloat, x::AbstractFloat, grid::rectilinearGrid, t::AbstractFloat, dataDir::AbstractString)
     # Calculate spacing in κ
     Ly = grid.yR - grid.yL
     Lz = grid.zR - grid.zL

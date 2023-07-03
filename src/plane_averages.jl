@@ -1,7 +1,7 @@
 # Functions for calculating and manipulating plane averages
 
 # Function to calculate y-z plane averages
-function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64, thermo::thermodynamicProperties)
+function getPlaneAverages(x::AbstractArray, Q::AbstractArray, Nx::Integer, Ny::Integer, Nz::Integer, nVars::Integer, thermo::thermodynamicProperties)
     # Reporting
     tStart = report("Calculating plane averages", 1)
     # Extract thermodynamic properties
@@ -61,7 +61,7 @@ function getPlaneAverages(x::SubArray{Float32,1}, Q::Array{Float32,4}, Nx::Int64
 end
 
 # Function to convert to primitive variables
-function convertSolution!(Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, nVars::Int64)
+function convertSolution!(Q::AbstractArray, Nx::Integer, Ny::Integer, Nz::Integer, nVars::Integer)
     # Reporting
     tStart = report("Converting to primitive variables", 1)
     # Loop over all cells
@@ -87,7 +87,7 @@ function convertSolution!(Q::Array{Float32,4}, Nx::Int64, Ny::Int64, Nz::Int64, 
 end
 
 # Function to calculate volume fraction from mass fraction (note: assumes species 1)
-function volumeFraction(Y1::Float32, R::Array{Float64,1})
+function volumeFraction(Y1::AbstractFloat, R::AbstractArray)
     # Calculate denominator
     sumRY = R[1] * Y1 + R[2] * (1.0 - Y1)
     # Calculate volume fraction

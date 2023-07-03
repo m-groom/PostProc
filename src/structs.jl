@@ -2,41 +2,41 @@
 
 # Struct to store settings for a rectilinear grid
 struct rectilinearGrid
-    Nx::Int64
-    Ny::Int64
-    Nz::Int64
-    xL::Float64
-    xR::Float64
-    yL::Float64
-    yR::Float64
-    zL::Float64
-    zR::Float64
+    Nx::Integer
+    Ny::Integer
+    Nz::Integer
+    xL::AbstractFloat
+    xR::AbstractFloat
+    yL::AbstractFloat
+    yR::AbstractFloat
+    zL::AbstractFloat
+    zR::AbstractFloat
 end
 
 # Struct to store input file settings
 struct inputSettings
-    nVars::Int
-    startTime::Float64
-    Δt::Float64
-    nFiles::Int
+    nVars::Integer
+    startTime::AbstractFloat
+    Δt::AbstractFloat
+    nFiles::Integer
 end
 
 # Struct to store thermodynamic properties
 struct thermodynamicProperties
-    μ::Array{Float64,1}
-    W::Array{Float64,1}
+    μ::AbstractArray
+    W::AbstractArray
 end
 
 # Struct to store plane averages
 struct planeAverage
-    x::Array{Float64,1}
-    rhoBar::Array{Float64,1}
-    UBar::Array{Float64,1}
-    VBar::Array{Float64,1}
-    WBar::Array{Float64,1}
-    Y1Bar::Array{Float64,1}
-    Z1Bar::Array{Float64,1}
-    Z1Z2Bar::Array{Float64,1}
-    muBar::Array{Float64,1}
-    nuBar::Array{Float64,1}
+    x::AbstractArray
+    rhoBar::AbstractArray
+    UBar::AbstractArray
+    VBar::AbstractArray
+    WBar::AbstractArray
+    Y1Bar::AbstractArray
+    Z1Bar::AbstractArray
+    Z1Z2Bar::AbstractArray
+    muBar::AbstractArray
+    nuBar::AbstractArray
 end
